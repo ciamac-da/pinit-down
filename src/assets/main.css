@@ -17,10 +17,19 @@ header {
   justify-content: center;
   align-items: center;
 }
+
 header img {
   max-width: 60px;
   transform: rotate(-10deg);
+  transition: .5s linear all;
+  cursor: pointer;
 }
+
+header img:hover {
+  transform: rotate(3.142rad);
+  transition: .5s linear all;
+}
+
 header h1 {
   margin: 0;
   font-size: 2em;
