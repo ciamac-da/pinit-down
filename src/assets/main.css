@@ -70,6 +70,8 @@ header h1 {
   color: #bbb;
 }
 
-.task i.active {
+.task i.active,
+.task i:hover
+{
   color: #ecb732;
 }
