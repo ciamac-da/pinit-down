@@ -6,9 +6,7 @@
       </a>
       <h1>Pinit Down</h1>
     </header>
-    <div class="is-loading" v-if="taskStore.isLoading">
-      Loading... <LoadingSpinner />
-    </div>
+    <div class="is-loading" v-if="isLoading">Loading... <LoadingSpinner /></div>
     <div v-else>
       <div class="new-task-form">
         <TaskForm />
@@ -16,23 +14,23 @@
       <nav class="filter">
         <button @click="filter = 'All'">All Tasks</button>
         <button @click="filter = 'Favs'">Fav Tasks</button>
-        <button @click="taskStore.$reset">Reset All Tasks</button>
+        <button @click="$reset">Reset All Tasks</button>
       </nav>
       <div class="task-list" v-if="filter === 'All'">
         <p>
-          You have {{ taskStore.totalCount }}
-          {{ taskStore.totalCount <= 1 ? "Task" : "Tasks" }}
+          You have {{ totalCount }}
+          {{ totalCount <= 1 ? "Task" : "Tasks" }}
         </p>
-        <div v-for="task in taskStore.tasks" :key="task.id">
+        <div v-for="task in tasks" :key="task.id">
           <TaskDetails :task="task" />
         </div>
       </div>
       <div class="task-list" v-if="filter === 'Favs'">
         <p>
-          You have {{ taskStore.favCount }} Fav
-          {{ taskStore.favCount <= 1 ? "Task" : "Tasks" }}
+          You have {{ favCount }} Fav
+          {{ favCount <= 1 ? "Task" : "Tasks" }}
         </p>
-        <div v-for="task in taskStore.favs">
+        <div v-for="task in favs">
           <TaskDetails :task="task" />
         </div>
       </div>
@@ -46,6 +44,7 @@ import { useTaskStore } from "./stores/TaskStore";
 import TaskDetails from "./components/TaskDetails.vue";
 import TaskForm from "./components/TaskForm.vue";
 import LoadingSpinner from "./components/LoadingSpinner.vue";
+import { storeToRefs } from "pinia";
 
 export default {
   components: { TaskDetails, TaskForm, LoadingSpinner },
@@ -53,12 +52,15 @@ export default {
   setup() {
     const taskStore = useTaskStore();
 
+    const { tasks, isLoading, favs, totalCount, favCount } =
+      storeToRefs(taskStore);
+
     // Fetch Tasks
     taskStore.getTasks();
 
     const filter = ref("All");
 
-    return { taskStore, filter };
+    return { taskStore, filter, tasks, isLoading, favs, totalCount, favCount };
   },
 };
 </script>
