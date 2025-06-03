@@ -92,13 +92,13 @@ header h1 {
 }
 
 .filter {
-  width: 100%;
+  max-width: 640px;
   display: flex;
   gap: 5px;
-  justify-content: center;
+  justify-content: flex-end;
   margin: auto;
   text-align: center;
-  padding: 20px 0;
+  padding-top: 60px;
 }
 
 .filter button {
