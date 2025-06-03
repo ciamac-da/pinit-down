@@ -39,6 +39,33 @@ header h1 {
   transform: rotate(2deg);
 }
 
+.filter {
+  width: 100%;
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  margin: auto;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.filter button {
+  color: white;
+  background: blueviolet;
+  border-radius: 5px;
+  border:none;
+  cursor: pointer;
+  padding: 10px;
+  transition: .2s linear all;
+
+}
+
+.filter button:hover {
+  color: #e2dada;
+  scale: 1.08;
+  transition: .2s linear all;
+}
+
 .task-list {
   max-width: 640px;
   margin: 20px auto;

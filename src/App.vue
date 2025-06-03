@@ -6,13 +6,19 @@
       </a>
       <h1>Pinit Down</h1>
     </header>
-    <div class="task-list">
+
+    <nav class="filter">
+      <button @click="filter = 'All'">All Tasks</button>
+      <button @click="filter = 'Favs'">Fav Tasks</button>
+    </nav>
+
+    <div class="task-list" v-if="filter === 'All'">
       <p>All Tasks</p>
       <div v-for="task in taskStore.tasks">
         <TaskDetails :task="task" />
       </div>
     </div>
-    <div class="task-list">
+    <div class="task-list" v-if="filter === 'Favs'">
       <p>Fav Tasks</p>
       <div v-for="task in taskStore.favs">
         <TaskDetails :task="task" />
@@ -22,6 +28,7 @@
 </template>
 
 <script>
+import { ref } from "vue";
 import { useTaskStore } from "./stores/TaskStore";
 import TaskDetails from "./components/TaskDetails.vue";
 
@@ -30,7 +37,10 @@ export default {
 
   setup() {
     const taskStore = useTaskStore();
-    return { taskStore };
+
+    const filter = ref("All");
+
+    return { taskStore, filter };
   },
 };
 </script>
