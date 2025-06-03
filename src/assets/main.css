@@ -61,9 +61,13 @@ header h1 {
 }
 
 .filter button:hover {
-  color: #e2dada;
+  color: #a09c9c;
   scale: 1.08;
   transition: .2s linear all;
+}
+.filter button:focus,
+.filter button:active {
+  color: #a09c9c;
 }
 
 .task-list {
