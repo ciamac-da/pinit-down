@@ -4,6 +4,7 @@ body {
   background: #f2f2f2;
   color: #444;
   margin: 0;
+  overscroll-behavior: none;
 }
 body * {
   font-family: "Poppins";
@@ -32,11 +33,27 @@ header img:hover {
 
 header h1 {
   margin: 0;
-  font-size: 2em;
+  font-size: 48px;
   padding-top: 25px;
   margin-left: 15px;
   color: white;
   transform: rotate(2deg);
+}
+
+.is-loading {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  margin: auto;
+  align-items: center;
+  font-weight: bolder;
+  width: 100%;
+  gap: 10px;
+  justify-content: center;
+  vertical-align:middle;
+  position: absolute;
+  top: 50%;
+  font-size: 28px;
 }
 
 .submit-form {
@@ -143,4 +160,14 @@ header h1 {
 .task i:hover
 {
   color: #ecb732;
+}
+
+@media only screen and (max-width: 767px) {
+
+  header h1 {
+  font-size: 28px;
+}
+  .is-loading {
+  font-size: 20px;
+}
 }
