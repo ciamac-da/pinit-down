@@ -39,6 +39,41 @@ header h1 {
   transform: rotate(2deg);
 }
 
+.submit-form {
+  display: flex;
+  margin: auto;
+  width: 70%;
+  gap: 10px;
+  justify-content: center;
+  padding: 40px 0 20px 0;
+  border: none;
+  box-shadow: none;
+}
+
+.submit-form input {
+  border: none;
+  width: inherit;
+  padding: 10px;
+}
+
+.submit-form input:focus,
+.submit-form input:active {
+  outline: none;
+  box-shadow: none;
+}
+
+
+.submit-form button {
+    background-color: #ecb732;
+    border: none;
+    cursor: pointer;
+    width: 50px;
+}
+
+.submit-form button:hover {
+    background-color: #dcb043;
+}
+
 .filter {
   width: 100%;
   display: flex;
@@ -61,18 +96,18 @@ header h1 {
 }
 
 .filter button:hover {
-  color: #a09c9c;
-  scale: 1.08;
+  scale: 1.04;
   transition: .2s linear all;
 }
 .filter button:focus,
 .filter button:active {
-  color: #a09c9c;
+  color: #d4cdcd;
 }
 
 .task-list {
   max-width: 640px;
   margin: 20px auto;
+  padding: 0 12px;
 }
 
 .task {
@@ -99,6 +134,9 @@ header h1 {
   margin-left: 6px;
   cursor: pointer;
   color: #bbb;
+}
+.task .fav {
+  color: red;
 }
 
 .task i.active,

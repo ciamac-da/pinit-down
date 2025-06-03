@@ -7,6 +7,10 @@
       <h1>Pinit Down</h1>
     </header>
 
+    <div class="new-task-form">
+      <TaskForm />
+    </div>
+
     <nav class="filter">
       <button @click="filter = 'All'">All Tasks</button>
       <button @click="filter = 'Favs'">Fav Tasks</button>
@@ -37,9 +41,10 @@
 import { ref } from "vue";
 import { useTaskStore } from "./stores/TaskStore";
 import TaskDetails from "./components/TaskDetails.vue";
+import TaskForm from "./components/TaskForm.vue";
 
 export default {
-  components: { TaskDetails },
+  components: { TaskDetails, TaskForm },
 
   setup() {
     const taskStore = useTaskStore();

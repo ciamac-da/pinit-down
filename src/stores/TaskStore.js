@@ -19,5 +19,19 @@ getters: {
    totalCount: (state) => {
     return state.tasks.length
   },
-}
+},
+actions: {
+  addTask(task) {
+    this.tasks.push(task)
+  },
+  toggleFav(id) {
+    const task = this.tasks.find(t => t.id === id)
+    if (task) {
+      task.isFav = !task.isFav
+    }
+  },
+  removeTask(id) {
+    this.tasks = this.tasks.filter(t => t.id !== id)
+  }
+  }
 })
