@@ -27,7 +27,7 @@ header img {
 }
 
 header img:hover {
-  transform: rotate(3.142rad);
+  transform: rotate(6rad);
   transition: .5s linear all;
 }
 
@@ -39,6 +39,28 @@ header h1 {
   color: white;
   transform: rotate(2deg);
 }
+
+.theme-toggle {
+  position: absolute;
+  right: 12px;
+  top: 85px;
+  cursor: pointer;
+  padding: 8px;
+  transition: .5s linear all;
+}
+
+.theme-toggle:hover {
+  transform: rotate(6rad);
+  transition: .5s linear all;
+}
+
+.theme-toggle i {
+  color: #ecb732;
+  background: transparent;
+  border: none;
+  font-size: 28px;
+}
+
 
 .is-loading {
   display: flex;
@@ -54,6 +76,8 @@ header h1 {
   position: absolute;
   top: 50%;
   font-size: 28px;
+  text-shadow: 5px 1px 7px blueviolet;
+  color: white;
 }
 
 .submit-form {
@@ -82,13 +106,17 @@ header h1 {
 
 .submit-form button {
     background-color: #ecb732;
+    color: white;
     border: none;
     cursor: pointer;
     width: 50px;
+    transition: .2s linear all;
+
 }
 
 .submit-form button:hover {
-    background-color: #dcb043;
+  scale: 1.04;
+  transition: .2s linear all;
 }
 
 .filter {
@@ -98,7 +126,7 @@ header h1 {
   justify-content: flex-end;
   margin: auto;
   text-align: center;
-  padding-top: 60px;
+  padding: 60px 12px 0 12px;
 }
 
 .filter button {
@@ -162,6 +190,11 @@ header h1 {
   color: #ecb732;
 }
 
+
+/* ---------------------- */
+/* MEDIA QUERY */
+/* ---------------------- */
+
 @media only screen and (max-width: 767px) {
 
   header h1 {
@@ -170,4 +203,57 @@ header h1 {
   .is-loading {
   font-size: 20px;
 }
+.theme-toggle {
+  top: 75px;
+}
+}
+
+/* ---------------------- */
+/* 🌙 DARK MODE OVERRIDES */
+/* ---------------------- */
+
+.dark body {
+  background: #1e1e1e;
+  color: #f0f0f0;
+}
+
+.dark header {
+  background: #2c125f;
+}
+
+.dark .theme-toggle i {
+  color: #ecb732;
+}
+
+.dark .is-loading {
+  color: #ecb732;
+  text-shadow: 2px 1px 4px #8a2be2;
+}
+
+.dark .submit-form input {
+  background-color: #444;
+  color: white;
+}
+
+.dark .submit-form button {
+  background-color:  #bb9127;
+}
+
+.dark .filter button {
+  background: #4c1d95;
+}
+
+.dark .task {
+  background: #333;
+  color: #eee;
+  box-shadow: 2px 4px 6px rgba(255,255,255,0.05);
+}
+
+.dark .task i {
+  color: #888;
+}
+
+.dark .task i.active,
+.dark .task i:hover {
+  color: #ecb732;
 }

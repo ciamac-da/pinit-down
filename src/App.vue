@@ -4,8 +4,16 @@
       <a href="https://pinia.vuejs.org/" target="_blank">
         <img src="./assets/pinit-down.png" alt="pinia logo" />
       </a>
-      <h1>Pinit Down</h1>
+      <div>
+        <h1>Pinit Down</h1>
+        <button class="theme-toggle" @click="themeStore.toggleTheme()">
+          <i class="material-icons">
+            {{ themeStore.isDark ? "dark_mode" : "light_mode" }}
+          </i>
+        </button>
+      </div>
     </header>
+
     <div class="is-loading" v-if="isLoading">Loading... <LoadingSpinner /></div>
     <div v-else>
       <div class="new-task-form">
@@ -39,8 +47,9 @@
 </template>
 
 <script>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useTaskStore } from "./stores/TaskStore";
+import { useThemeStore } from "./stores/ThemeStore";
 import TaskDetails from "./components/TaskDetails.vue";
 import TaskForm from "./components/TaskForm.vue";
 import LoadingSpinner from "./components/LoadingSpinner.vue";
@@ -51,6 +60,10 @@ export default {
 
   setup() {
     const taskStore = useTaskStore();
+    const themeStore = useThemeStore();
+    onMounted(() => {
+      themeStore.loadTheme();
+    });
 
     const { tasks, isLoading, favs, totalCount, favCount } =
       storeToRefs(taskStore);
@@ -60,7 +73,16 @@ export default {
 
     const filter = ref("All");
 
-    return { taskStore, filter, tasks, isLoading, favs, totalCount, favCount };
+    return {
+      taskStore,
+      themeStore,
+      filter,
+      tasks,
+      isLoading,
+      favs,
+      totalCount,
+      favCount,
+    };
   },
 };
 </script>
