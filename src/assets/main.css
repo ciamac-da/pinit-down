@@ -47,6 +47,8 @@ header h1 {
   cursor: pointer;
   padding: 8px;
   transition: .5s linear all;
+  background: transparent;
+  border: none;
 }
 
 .theme-toggle:hover {
@@ -56,8 +58,6 @@ header h1 {
 
 .theme-toggle i {
   color: #ecb732;
-  background: transparent;
-  border: none;
   font-size: 28px;
 }
 
