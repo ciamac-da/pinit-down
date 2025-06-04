@@ -61,7 +61,6 @@ header h1 {
   font-size: 28px;
 }
 
-
 .is-loading {
   display: flex;
   flex-direction: column;
@@ -78,6 +77,10 @@ header h1 {
   font-size: 28px;
   text-shadow: 5px 1px 7px blueviolet;
   color: white;
+}
+.new-task-form {
+  max-width: 1340px;
+  margin: auto;
 }
 
 .submit-form {
