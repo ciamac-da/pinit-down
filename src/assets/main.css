@@ -20,7 +20,7 @@ header {
 }
 
 header img {
-  max-width: 60px;
+  max-width: 80px;
   transform: rotate(-10deg);
   transition: .5s linear all;
   cursor: pointer;
