@@ -111,7 +111,7 @@ header h1 {
     cursor: pointer;
     width: 50px;
     transition: .2s linear all;
-
+    border-radius: 5px;
 }
 
 .submit-form button:hover {
@@ -179,7 +179,14 @@ header h1 {
   margin-left: 6px;
   cursor: pointer;
   color: #bbb;
+  transition: .2s linear all;
 }
+
+.task i:hover {
+  scale: 1.04;
+  transition: .2s linear all;
+}
+
 .task .fav {
   color: red;
 }
@@ -248,6 +255,11 @@ header h1 {
   color: #eee;
   box-shadow: 2px 4px 6px rgba(255,255,255,0.05);
 }
+
+.dark .task .fav {
+  color: red;
+}
+
 
 .dark .task i {
   color: #888;
