@@ -22,7 +22,7 @@
       <nav class="filter">
         <button @click="filter = 'All'">All Tasks</button>
         <button @click="filter = 'Favs'">Fav Tasks</button>
-        <button @click="taskStore.$reset">Reset All Tasks</button>
+        <button @click="taskStore.deleteAllTasks">Delete All Tasks</button>
       </nav>
       <div class="task-list" v-if="filter === 'All'">
         <p>

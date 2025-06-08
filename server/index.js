@@ -3,6 +3,10 @@ import cors from 'cors'
 import { MongoClient, ObjectId } from 'mongodb'
 import dotenv from 'dotenv'
 
+function isValidObjectId(id) {
+  return ObjectId.isValid(id) && String(new ObjectId(id)) === id
+}
+
 dotenv.config({ path: '.env.local' })
 
 
@@ -43,15 +47,41 @@ app.post('/tasks', async (req, res) => {
 
 // PATCH update task
 app.patch('/tasks/:id', async (req, res) => {
-  const { id } = req.params
-  const update = req.body
-  const result = await tasks.updateOne({ _id: new ObjectId(id) }, { $set: update })
-  res.json(result)
-})
+    const { id } = req.params
+    const update = req.body
+  
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ error: 'Invalid ID format' })
+    }
+  
+    const result = await tasks.updateOne(
+      { _id: new ObjectId(id) },
+      { $set: update }
+    )
+    res.json(result)
+  })
+  
 
 // DELETE task
 app.delete('/tasks/:id', async (req, res) => {
-  const { id } = req.params
-  const result = await tasks.deleteOne({ _id: new ObjectId(id) })
-  res.json(result)
-})
+    const { id } = req.params
+  
+    if (!isValidObjectId(id)) {
+      return res.status(400).json({ error: 'Invalid ID format' })
+    }
+  
+    const result = await tasks.deleteOne({ _id: new ObjectId(id) })
+    res.json(result)
+  })
+
+// DELETE all tasks
+app.delete('/tasks', async (req, res) => {
+    try {
+      const result = await tasks.deleteMany({})
+      res.json(result)
+    } catch (err) {
+      console.error('Failed to delete all tasks:', err)
+      res.status(500).json({ error: 'Internal Server Error' })
+    }
+  })
+  
