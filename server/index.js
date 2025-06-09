@@ -4,9 +4,15 @@ import { MongoClient, ObjectId } from 'mongodb'
 import dotenv from 'dotenv'
 
 function isValidObjectId(id) {
-  return ObjectId.isValid(id) && String(new ObjectId(id)) === id
-}
-
+    return (
+      typeof id === 'string' &&
+      ObjectId.isValid(id) &&
+      id.length === 24 &&
+      /^[a-fA-F0-9]{24}$/.test(id)
+    )
+  }
+  
+  
 dotenv.config({ path: '.env.local' })
 
 
@@ -16,7 +22,11 @@ const PORT = 3000
 app.use(cors())
 app.use(express.json())
 
-const client = new MongoClient(process.env.MONGODB_URI)
+if (!process.env.MONGODB_URI) {
+    throw new Error('❌ Missing MONGODB_URI in .env.local')
+  }
+
+  const client = new MongoClient(process.env.MONGODB_URI)
 const dbName = 'pinit-down'
 let tasks
 
@@ -67,9 +77,9 @@ app.delete('/tasks/:id', async (req, res) => {
     const { id } = req.params
   
     if (!isValidObjectId(id)) {
-      return res.status(400).json({ error: 'Invalid ID format' })
-    }
-  
+        return res.status(400).json({ error: 'Invalid ID format' })
+      }
+      
     const result = await tasks.deleteOne({ _id: new ObjectId(id) })
     res.json(result)
   })
