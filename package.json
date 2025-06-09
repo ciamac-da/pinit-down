@@ -1,22 +1,15 @@
 {
   "name": "pinit-down",
-  "version": "0.0.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+  "version": "1.0.0",
+  "main": "index.js",
+ "scripts": {
+    "dev": "concurrently \"npm run dev --prefix frontend\" \"npm run start --prefix server\""
   },
-  "dependencies": {
-    "json-server": "^1.0.0-beta.3",
-    "mongodb": "^6.17.0",
-    "pinia": "^3.0.1",
-    "vue": "^3.5.13"
-  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
   "devDependencies": {
-    "@vitejs/plugin-vue": "^5.2.3",
-    "vite": "^6.2.4",
-    "vite-plugin-vue-devtools": "^7.7.2"
+    "concurrently": "^9.1.2"
   }
 }
