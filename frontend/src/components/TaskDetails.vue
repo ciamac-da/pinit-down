@@ -15,7 +15,7 @@
 </template>
 
 <script>
-import { useTaskStore } from "../stores/TaskStore";
+import { useTaskStore } from "@/stores/TaskStore";
 
 export default {
   props: ["task"],

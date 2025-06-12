@@ -48,11 +48,11 @@
 
 <script>
 import { ref, onMounted } from "vue";
-import { useTaskStore } from "./stores/TaskStore";
-import { useThemeStore } from "./stores/ThemeStore";
-import TaskDetails from "./components/TaskDetails.vue";
-import TaskForm from "./components/TaskForm.vue";
-import LoadingSpinner from "./components/LoadingSpinner.vue";
+import { useTaskStore } from "@/stores/TaskStore";
+import { useThemeStore } from "@/stores/ThemeStore";
+import TaskDetails from "@/components/TaskDetails.vue";
+import TaskForm from "@/components/TaskForm.vue";
+import LoadingSpinner from "@/components/LoadingSpinner.vue";
 import { storeToRefs } from "pinia";
 
 export default {

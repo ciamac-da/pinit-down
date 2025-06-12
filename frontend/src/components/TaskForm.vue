@@ -7,7 +7,7 @@
 
 <script>
 import { ref } from "vue";
-import { useTaskStore } from "../stores/TaskStore";
+import { useTaskStore } from "@/stores/TaskStore";
 
 export default {
   setup() {
