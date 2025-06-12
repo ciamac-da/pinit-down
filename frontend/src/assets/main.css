@@ -112,7 +112,7 @@ header h1 {
     color: white;
     border: none;
     cursor: pointer;
-    width: 50px;
+    width: 75cap;
     transition: .2s linear all;
     border-radius: 5px;
 }
@@ -141,6 +141,13 @@ header h1 {
   padding: 10px;
   transition: .2s linear all;
 
+}
+.filter button.active {
+  background-color: #ecb732;
+  color: black;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  scale: 1.05;
 }
 
 .filter button:hover {
@@ -251,6 +258,10 @@ header h1 {
 
 .dark .filter button {
   background: #4c1d95;
+}
+.dark .filter button.active {
+  background-color: #bb9127;
+  color: white;
 }
 
 .dark .cart-item {

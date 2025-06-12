@@ -1,7 +1,7 @@
 <template>
   <form class="submit-form" @submit.prevent="handleSubmit">
     <input type="text" v-model="newCartItem" placeholder="I need to..." />
-    <button>Add</button>
+    <button>Add Item</button>
   </form>
 </template>
 

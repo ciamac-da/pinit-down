@@ -20,10 +20,26 @@
         <CartItemForm />
       </div>
       <nav class="filter">
-        <button @click="filter = 'All'">All Items</button>
-        <button @click="filter = 'Favs'">Fav Items</button>
-        <button @click="cartStore.deleteAllCartItems">Delete All Items</button>
-      </nav>
+  <button
+    :class="{ active: filter === 'All' }"
+    @click="filter = 'All'"
+  >
+    All Items
+  </button>
+  <button
+    :class="{ active: filter === 'Favs' }"
+    @click="filter = 'Favs'"
+  >
+    Fav Items
+  </button>
+  <button
+    class="delete-all"
+    @click="cartStore.deleteAllCartItems"
+  >
+    Delete All Items
+  </button>
+</nav>
+
       <div class="cart-item-list" v-if="filter === 'All'">
         <p>
           You have {{ totalCount }}
