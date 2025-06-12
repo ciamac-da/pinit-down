@@ -112,7 +112,7 @@ header h1 {
     color: white;
     border: none;
     cursor: pointer;
-    width: 75cap;
+    width: 75px;
     transition: .2s linear all;
     border-radius: 5px;
 }
