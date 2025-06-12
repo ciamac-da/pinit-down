@@ -78,7 +78,7 @@ header h1 {
   text-shadow: 5px 1px 7px blueviolet;
   color: white;
 }
-.new-task-form {
+.new-cart-item-form {
   max-width: 1340px;
   margin: auto;
 }
@@ -152,13 +152,13 @@ header h1 {
   color: #d4cdcd;
 }
 
-.task-list {
+.cart-item-list {
   max-width: 640px;
   margin: 20px auto;
   padding: 0 12px;
 }
 
-.task {
+.cart-item {
   padding: 6px 20px;
   background: #fff;
   margin-top: 20px;
@@ -169,15 +169,15 @@ header h1 {
   align-items: center;
 }
 
-.task h3, .task .icons {
+.cart-item h3, .cart-item .icons {
   display: inline-block;
 }
 
-.task .icons {
+.cart-item .icons {
   text-align: right;
 }
 
-.task i {
+.cart-item i {
   font-size: 1.4em;
   margin-left: 6px;
   cursor: pointer;
@@ -185,17 +185,17 @@ header h1 {
   transition: .2s linear all;
 }
 
-.task i:hover {
+.cart-item i:hover {
   scale: 1.04;
   transition: .2s linear all;
 }
 
-.task .fav {
+.cart-item .fav {
   color: red;
 }
 
-.task i.active,
-.task i:hover
+.cart-item i.active,
+.cart-item i:hover
 {
   color: #ecb732;
 }
@@ -253,22 +253,22 @@ header h1 {
   background: #4c1d95;
 }
 
-.dark .task {
+.dark .cart-item {
   background: #333;
   color: #eee;
   box-shadow: 2px 4px 6px rgba(255,255,255,0.05);
 }
 
-.dark .task .fav {
+.dark .cart-item .fav {
   color: red;
 }
 
 
-.dark .task i {
+.dark .cart-item i {
   color: #888;
 }
 
-.dark .task i.active,
-.dark .task i:hover {
+.dark .cart-item i.active,
+.dark .cart-item i:hover {
   color: #ecb732;
 }

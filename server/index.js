@@ -32,12 +32,12 @@ if (!process.env.MONGODB_URI) {
 
   const client = new MongoClient(process.env.MONGODB_URI)
 const dbName = 'pinit-down'
-let tasks
+let cartItems
 
 async function startServer() {
   await client.connect()
   const db = client.db(dbName)
-  tasks = db.collection('tasks')
+  cartItems = db.collection('cartItems')
 
   app.listen(PORT, () => {
     console.log(`✅ API is live at http://localhost:${PORT}`)
@@ -46,21 +46,26 @@ async function startServer() {
 
 startServer()
 
-// GET all tasks
-app.get('/tasks', async (req, res) => {
-  const all = await tasks.find().toArray()
+// GET all cart items
+app.get('/cart-items', async (req, res) => {
+  const all = await cartItems.find().toArray()
   res.json(all)
 })
 
-// POST new task
-app.post('/tasks', async (req, res) => {
-  const task = req.body
-  const result = await tasks.insertOne(task)
-  res.json(result)
+// POST new cart item
+app.post('/cart-items', async (req, res) => {
+  const cartItem = req.body
+  try {
+    const result = await cartItems.insertOne(cartItem)
+    res.json(result)
+  } catch (error) {
+    console.error("Failed to insert cart item:", error)
+    res.status(500).json({ error: "Failed to insert cart item" })
+  }
 })
 
-// PATCH update task
-app.patch('/tasks/:id', async (req, res) => {
+// PATCH update cart item
+app.patch('/cart-items/:id', async (req, res) => {
     const { id } = req.params
     const update = req.body
   
@@ -68,7 +73,7 @@ app.patch('/tasks/:id', async (req, res) => {
       return res.status(400).json({ error: 'Invalid ID format' })
     }
   
-    const result = await tasks.updateOne(
+    const result = await cartItems.updateOne(
       { _id: new ObjectId(id) },
       { $set: update }
     )
@@ -76,25 +81,25 @@ app.patch('/tasks/:id', async (req, res) => {
   })
   
 
-// DELETE task
-app.delete('/tasks/:id', async (req, res) => {
+// DELETE cart item
+app.delete('/cart-items/:id', async (req, res) => {
     const { id } = req.params
   
     if (!isValidObjectId(id)) {
         return res.status(400).json({ error: 'Invalid ID format' })
       }
       
-    const result = await tasks.deleteOne({ _id: new ObjectId(id) })
+    const result = await cartItems.deleteOne({ _id: new ObjectId(id) })
     res.json(result)
   })
 
-// DELETE all tasks
-app.delete('/tasks', async (req, res) => {
+// DELETE all cart items
+app.delete('/cart-items', async (req, res) => {
     try {
-      const result = await tasks.deleteMany({})
+      const result = await cartItems.deleteMany({})
       res.json(result)
     } catch (err) {
-      console.error('Failed to delete all tasks:', err)
+      console.error('Failed to delete all cart items:', err)
       res.status(500).json({ error: 'Internal Server Error' })
     }
   })

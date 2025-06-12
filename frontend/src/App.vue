@@ -16,30 +16,30 @@
 
     <div class="is-loading" v-if="isLoading">Loading... <LoadingSpinner /></div>
     <div v-else>
-      <div class="new-task-form">
-        <TaskForm />
+      <div class="new-cart-item-form">
+        <CartItemForm />
       </div>
       <nav class="filter">
-        <button @click="filter = 'All'">All Tasks</button>
-        <button @click="filter = 'Favs'">Fav Tasks</button>
-        <button @click="taskStore.deleteAllTasks">Delete All Tasks</button>
+        <button @click="filter = 'All'">All Items</button>
+        <button @click="filter = 'Favs'">Fav Items</button>
+        <button @click="cartStore.deleteAllCartItems">Delete All Items</button>
       </nav>
-      <div class="task-list" v-if="filter === 'All'">
+      <div class="cart-item-list" v-if="filter === 'All'">
         <p>
           You have {{ totalCount }}
-          {{ totalCount <= 1 ? "Task" : "Tasks" }}
+          {{ totalCount <= 1 ? "Cart Item" : "Cart Items" }}
         </p>
-        <div v-for="task in tasks" :key="task.id">
-          <TaskDetails :task="task" />
+        <div v-for="cartItem in cartItems" :key="cartItem.id">
+          <CartItemDetails :cartItem="cartItem" />
         </div>
       </div>
-      <div class="task-list" v-if="filter === 'Favs'">
+      <div class="cart-item-list" v-if="filter === 'Favs'">
         <p>
           You have {{ favCount }} Fav
-          {{ favCount <= 1 ? "Task" : "Tasks" }}
+          {{ favCount <= 1 ? "Cart Item" : "Cart Items" }}
         </p>
-        <div v-for="task in favs">
-          <TaskDetails :task="task" />
+        <div v-for="cartItem in favs">
+          <CartItemDetails :cartItem="cartItem" />
         </div>
       </div>
     </div>
@@ -48,36 +48,36 @@
 
 <script>
 import { ref, onMounted } from "vue";
-import { useTaskStore } from "@/stores/TaskStore";
+import { useCartStore } from "@/stores/CartStore";
 import { useThemeStore } from "@/stores/ThemeStore";
-import TaskDetails from "@/components/TaskDetails.vue";
-import TaskForm from "@/components/TaskForm.vue";
+import CartItemDetails from "@/components/CartItemDetails.vue";
+import CartItemForm from "@/components/CartItemForm.vue";
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
 import { storeToRefs } from "pinia";
 
 export default {
-  components: { TaskDetails, TaskForm, LoadingSpinner },
+  components: { CartItemDetails, CartItemForm, LoadingSpinner },
 
   setup() {
-    const taskStore = useTaskStore();
+    const cartStore = useCartStore();
     const themeStore = useThemeStore();
     onMounted(() => {
       themeStore.loadTheme();
     });
 
-    const { tasks, isLoading, favs, totalCount, favCount } =
-      storeToRefs(taskStore);
+    const { cartItems, isLoading, favs, totalCount, favCount } =
+      storeToRefs(cartStore);
 
-    // Fetch Tasks
-    taskStore.getTasks();
+    // Fetch Cart Items
+    cartStore.getCartItems();
 
     const filter = ref("All");
 
     return {
-      taskStore,
+      cartStore,
       themeStore,
       filter,
-      tasks,
+      cartItems,
       isLoading,
       favs,
       totalCount,
