@@ -31,6 +31,7 @@ export default {
 </script>
 
 <style lang="css" scoped>
+
 .submit-form {
   display: flex;
   margin: auto;
@@ -40,6 +41,8 @@ export default {
   padding: 40px 0 20px 0;
   border: none;
   box-shadow: none;
+  max-width: 1340px;
+  margin: auto;
 }
 
 .submit-form input {
