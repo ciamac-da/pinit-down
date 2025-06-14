@@ -1,0 +1,18 @@
+@media print {
+    .no-print {
+      display: none !important;
+    }
+  
+    body {
+      background: white !important;
+      color: black !important;
+      font-size: 12pt;
+    }
+  
+    * {
+      box-shadow: none !important;
+      text-shadow: none !important;
+      color-adjust: exact !important;
+    }
+  }
+  

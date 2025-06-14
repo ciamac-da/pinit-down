@@ -1,0 +1,40 @@
+.filter {
+    display: flex;
+    gap: 5px;
+    justify-content: flex-end;
+    margin: auto;
+    text-align: center;
+    padding-top: 60px;
+  }
+  
+  .filter button {
+    color: white;
+    background: blueviolet;
+    border-radius: 5px;
+    border: none;
+    cursor: pointer;
+    padding: 10px;
+    transition: 0.2s linear all;
+  }
+  
+  .filter button.active {
+    background-color: #ecb732;
+    color: black;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    scale: 1.05;
+  }
+  
+  .filter button:hover {
+    scale: 1.04;
+  }
+  
+  .filter button.delete-all {
+    background: #e63946;
+    color: white;
+  }
+  
+  .filter button.delete-all:hover {
+    background: #d62828;
+  }
+  

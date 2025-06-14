@@ -1,86 +1,45 @@
-@use '@/styles/abstracts/color';
-@use '@/styles/abstracts/size';
-@use '@/styles/abstracts/spacing';
-@use '@/styles/abstracts/breakpoint';
-@use '@/styles/abstracts/breakpoint/variables';
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+// 1. Abstracts (variables, mixins, functions)
+@use '@/styles/abstracts' as *;
 
+// 2. Base styles
+@use '@/styles/base/typography';
+
+// 3. Layout styles
+@use '@/styles/layout/container';
+@use '@/styles/layout/print';
+
+// 4. Component styles
+@use '@/styles/components/header';
+@use '@/styles/components/form';
+@use '@/styles/components/filter';
+@use '@/styles/components/cart-item';
+@use '@/styles/components/loading' as *;
+
+// 5. Optional: Move this to `base/_fonts.scss` if you prefer
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&family=VT323&display=swap');
 
+// 6. Global base rules
 html,
 body {
-    box-sizing: border-box;
-    background: #f2f2f2;
-    color: #444;
-    overscroll-behavior: none;
-    font-family: 'Poppins', sans-serif;
-    margin: 0;
-    height: 100vh;
-    padding: 0;
-    user-select: none;
-}
-
-body {
-    overscroll-behavior: none;
-}
-
-.is-loading {
-    display: flex;
-    flex-direction: column;
-    text-align: center;
-    margin: auto;
-    align-items: center;
-    font-weight: bolder;
-    width: 100%;
-    gap: 10px;
-    justify-content: center;
-    vertical-align: middle;
-    position: absolute;
-    top: 50%;
-    font-size: 28px;
-    text-shadow: 5px 1px 7px blueviolet;
-    color: white;
-}
-
-.dark body {
-    background: #1e1e1e;
-    color: #f0f0f0;
-}
-
-.dark .is-loading {
-    color: #ecb732;
-    text-shadow: 2px 1px 4px #8a2be2;
-}
-
-.container-wrapper {
-    max-width: 1340px;
-    padding: 0 20px;
-
-    .container {
-        max-width: 640px;
-        margin: auto;
-    }
-}
-
-
-
-
-@media print {
-
-    /* Hide the print button */
-    .print-button {
-        display: none !important;
-    }
-
-    /* Or disable printing altogether */
-    body {
-        display: none;
-    }
+  box-sizing: border-box;
+  background: #f2f2f2;
+  color: #444;
+  font-family: 'Poppins', sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overscroll-behavior: none;
+  user-select: none;
 }
 
 img {
-    pointer-events: none;
-    user-select: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+.dark {
+  body {
+    background: #1e1e1e;
+    color: #f0f0f0;
+  }
 }
