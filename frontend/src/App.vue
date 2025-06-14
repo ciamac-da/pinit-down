@@ -47,7 +47,7 @@ import FilterNav from "@/components/FilterNav.vue";
 import CartItemDetails from "@/components/CartItemDetails.vue";
 import CartItemForm from "@/components/CartItemForm.vue";
 import LoadingSpinner from "@/components/LoadingSpinner.vue";
-import "@/assets/global.css";
+import "@/styles/global.scss";
 
 export default {
   components: {

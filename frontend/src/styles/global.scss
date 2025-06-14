@@ -1,0 +1,86 @@
+@use '@/styles/abstracts/color';
+@use '@/styles/abstracts/size';
+@use '@/styles/abstracts/spacing';
+@use '@/styles/abstracts/breakpoint';
+@use '@/styles/abstracts/breakpoint/variables';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&family=VT323&display=swap');
+
+html,
+body {
+    box-sizing: border-box;
+    background: #f2f2f2;
+    color: #444;
+    overscroll-behavior: none;
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    height: 100vh;
+    padding: 0;
+    user-select: none;
+}
+
+body {
+    overscroll-behavior: none;
+}
+
+.is-loading {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    margin: auto;
+    align-items: center;
+    font-weight: bolder;
+    width: 100%;
+    gap: 10px;
+    justify-content: center;
+    vertical-align: middle;
+    position: absolute;
+    top: 50%;
+    font-size: 28px;
+    text-shadow: 5px 1px 7px blueviolet;
+    color: white;
+}
+
+.dark body {
+    background: #1e1e1e;
+    color: #f0f0f0;
+}
+
+.dark .is-loading {
+    color: #ecb732;
+    text-shadow: 2px 1px 4px #8a2be2;
+}
+
+.container-wrapper {
+    max-width: 1340px;
+    padding: 0 20px;
+
+    .container {
+        max-width: 640px;
+        margin: auto;
+    }
+}
+
+
+
+
+@media print {
+
+    /* Hide the print button */
+    .print-button {
+        display: none !important;
+    }
+
+    /* Or disable printing altogether */
+    body {
+        display: none;
+    }
+}
+
+img {
+    pointer-events: none;
+    user-select: none;
+}
