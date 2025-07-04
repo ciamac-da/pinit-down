@@ -1,38 +1,55 @@
+@use "@/styles/abstracts/breakpoint/variables";
+@use "@/styles/abstracts" as *;
+
 header {
   position: relative;
   text-align: center;
   background: blueviolet;
-  padding: 20px;
   display: flex;
+  padding: 0 20px;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
 
   a {
-    transform: rotate(-10deg);
-    transition: 0.5s linear all;
+    @include media-breakpoint-up(sm) {
+      transform: rotate(-10deg);
+      transition: 0.5s linear all;
+    }
 
     &:hover {
-      transform: rotate(350deg) !important;
+      @include media-breakpoint-up(sm) {
+        transform: rotate(350deg) !important;
+      }
     }
   }
   img {
-    max-width: 80px;
-    cursor: pointer;
+    max-width: 35px;
+    max-height: 35px;
+    @include media-breakpoint-up(sm) {
+      max-width: 70px;
+      max-height: 70px;
+      cursor: pointer;
+    }
   }
 
   h1 {
     margin: 0;
-    font-size: 48px;
-    padding-top: 25px;
-    margin-left: 15px;
+    font-size: 20px;
     color: white;
     transform: rotate(2deg);
+
+    @include media-breakpoint-up(sm) {
+      font-size: 28px;
+      padding-top: 25px;
+      margin-left: 15px;
+    }
   }
 
   .theme-toggle {
     position: absolute;
     right: 12px;
-    top: 85px;
+    top: 0;
     cursor: pointer;
     padding: 8px;
     background: transparent;
@@ -46,6 +63,11 @@ header {
     i {
       color: #ecb732;
       font-size: 28px;
+    }
+
+    @include media-breakpoint-up(sm) {
+      top: 20px;
+      right: 12px;
     }
   }
 }
