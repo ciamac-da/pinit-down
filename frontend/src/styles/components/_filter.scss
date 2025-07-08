@@ -1,40 +1,44 @@
+@use "@/styles/abstracts/breakpoint";
+@use "@/styles/abstracts/color";
+@use "@/styles/abstracts/spacing";
+@use "@/styles/abstracts/size";
+
 .filter {
-    display: flex;
-    gap: 5px;
-    justify-content: flex-end;
-    margin: auto;
-    text-align: center;
-    padding-top: 60px;
-  }
-  
-  .filter button {
-    color: white;
-    background: blueviolet;
-    border-radius: 5px;
-    border: none;
-    cursor: pointer;
-    padding: 10px;
-    transition: 0.2s linear all;
-  }
-  
-  .filter button.active {
-    background-color: #ecb732;
-    color: black;
-    font-weight: bold;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-    scale: 1.05;
-  }
-  
-  .filter button:hover {
-    scale: 1.04;
-  }
-  
-  .filter button.delete-all {
-    background: #e63946;
-    color: white;
-  }
-  
-  .filter button.delete-all:hover {
-    background: #d62828;
-  }
-  
+  display: flex;
+  gap: spacing.$spacing-xs;
+  justify-content: flex-end;
+  margin: auto;
+  text-align: center;
+  padding-top: spacing.$spacing-xl;
+}
+
+.filter button {
+  color: color.$light;
+  background: color.$blue-violet;
+  border-radius: spacing.$spacing-base;
+  border: none;
+  cursor: pointer;
+  padding: spacing.$spacing-xxs;
+  transition: 0.2s linear all;
+}
+
+.filter button.active {
+  background-color: color.$gold;
+  color: color.$light;
+  font-weight: bold;
+  box-shadow: 0 size.$sp02 size.$sp04 color.$dark;
+  scale: 1.2;
+}
+
+.filter button.active:hover {
+  scale: 1.2;
+}
+
+.filter button:hover {
+  scale: 1.05;
+}
+
+.filter button.delete-all {
+  background: color.$red;
+  color: color.$light;
+}

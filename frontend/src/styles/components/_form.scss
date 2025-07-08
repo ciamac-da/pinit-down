@@ -1,48 +1,55 @@
+@use "@/styles/abstracts/breakpoint";
+@use "@/styles/abstracts/color";
+@use "@/styles/abstracts/spacing";
+@use "@/styles/abstracts/size";
+
 .submit-form {
-    display: flex;
-    margin: auto;
-    width: 70%;
-    gap: 10px;
-    justify-content: center;
-    padding: 40px 0 20px 0;
-    border: none;
-    box-shadow: none;
-    max-width: 1340px;
-  }
-  
-  .submit-form input {
-    border: none;
-    width: inherit;
-    padding: 10px;
-  }
-  
-  .submit-form input:focus,
-  .submit-form input:active {
-    outline: none;
-    box-shadow: none;
-  }
-  
-  .submit-form button {
-    background-color: #ecb732;
-    color: white;
-    border: none;
-    cursor: pointer;
-    width: 75px;
-    transition: 0.2s linear all;
-    border-radius: 5px;
-  }
-  
-  .submit-form button:hover {
-    scale: 1.04;
-  }
-  
-  /* Dark mode */
-  .dark .submit-form input {
-    background-color: #444;
-    color: white;
-  }
-  
-  .dark .submit-form button {
-    background-color: #bb9127;
-  }
-  
+  display: flex;
+  margin: auto;
+  width: 70%;
+  gap: spacing.$spacing-xxs;
+  justify-content: center;
+  padding: spacing.$spacing-l 0 spacing.$spacing-s 0;
+  border: none;
+  box-shadow: none;
+  max-width: 83.75rem;
+}
+
+.submit-form input {
+  border: none;
+  width: inherit;
+  padding: spacing.$spacing-xxs;
+}
+
+.submit-form input:focus,
+.submit-form input:active {
+  outline: none;
+  box-shadow: none;
+}
+
+.submit-form button {
+  background-color: color.$gold;
+  color: color.$light;
+  border: none;
+  cursor: pointer;
+  width: size.$sp72;
+  transition: 0.2s linear all;
+  border-radius: spacing.$spacing-base;
+}
+
+.submit-form button:hover {
+  scale: 1.04;
+}
+
+.dark .submit-form input {
+  background-color: color.$dark50;
+  color: color.$light;
+}
+
+.dark .submit-form input::placeholder {
+  color: color.$light;
+}
+
+.dark .submit-form button {
+  background-color: color.$gold;
+}

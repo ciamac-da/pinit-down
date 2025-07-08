@@ -1,82 +1,85 @@
+@use "@/styles/abstracts/spacing";
+@use "@/styles/abstracts/size";
+@use "@/styles/abstracts/color";
+
 .is-loading {
-    display: flex;
-    flex-direction: column;
-    text-align: center;
-    margin: auto;
-    align-items: center;
-    font-weight: bolder;
-    width: 100%;
-    gap: 10px;
-    justify-content: center;
-    vertical-align: middle;
-    position: absolute;
-    top: 50%;
-    font-size: 28px;
-    text-shadow: 5px 1px 7px blueviolet;
-    color: white;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  margin: auto;
+  align-items: center;
+  font-weight: bolder;
+  width: 100%;
+  gap: spacing.$spacing-xxs;
+  justify-content: center;
+  vertical-align: middle;
+  position: absolute;
+  top: 50%;
+  font-size: 28px;
+  text-shadow: 0.313rem size.$sp01 0.438rem color.$blue-violet;
+  color: color.$light;
 }
 
 .loader {
-    position: relative;
-    transform: rotateZ(45deg);
-    perspective: 1000px;
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    color: #ecb732;
-  }
+  position: relative;
+  transform: rotateZ(45deg);
+  perspective: 62.5rem;
+  border-radius: 50%;
+  width: size.$sp48;
+  height: size.$sp48;
+  color: color.$gold;
+}
 
-  .loader:before,
-  .loader:after {
-    content: "";
-    display: block;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: inherit;
-    height: inherit;
-    border-radius: 50%;
-    transform: rotateX(70deg);
-    animation: 1s spin linear infinite;
-  }
-  .loader:after {
-    color: blueviolet;
-    transform: rotateY(70deg);
-    animation-delay: 0.4s;
-  }
-  
-  @keyframes spin {
-    0%,
-    100% {
-      box-shadow: 0.4em 0px 0 0px currentcolor;
-    }
-    12% {
-      box-shadow: 0.4em 0.4em 0 0 currentcolor;
-    }
-    25% {
-      box-shadow: 0 0.4em 0 0px currentcolor;
-    }
-    37% {
-      box-shadow: -0.4em 0.4em 0 0 currentcolor;
-    }
-    50% {
-      box-shadow: -0.4em 0 0 0 currentcolor;
-    }
-    62% {
-      box-shadow: -0.4em -0.4em 0 0 currentcolor;
-    }
-    75% {
-      box-shadow: 0px -0.4em 0 0 currentcolor;
-    }
-    87% {
-      box-shadow: 0.4em -0.4em 0 0 currentcolor;
-    }
-  }
-  
+.loader:before,
+.loader:after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: inherit;
+  height: inherit;
+  border-radius: 50%;
+  transform: rotateX(70deg);
+  animation: 1s spin linear infinite;
+}
+.loader:after {
+  color: color.$blue-violet;
+  transform: rotateY(70deg);
+  animation-delay: 0.4s;
+}
 
-  .dark {
-    .is-loading {
-      color: #ecb732;
-      text-shadow: 2px 1px 4px #8a2be2;
-    }
+@keyframes spin {
+  0%,
+  100% {
+    box-shadow: 0.4rem 0 0 0 currentcolor;
   }
+  12% {
+    box-shadow: 0.4em 0.4em 0 0 currentcolor;
+  }
+  25% {
+    box-shadow: 0 0.4em 0 0 currentcolor;
+  }
+  37% {
+    box-shadow: -0.4em 0.4em 0 0 currentcolor;
+  }
+  50% {
+    box-shadow: -0.4em 0 0 0 currentcolor;
+  }
+  62% {
+    box-shadow: -0.4em -0.4em 0 0 currentcolor;
+  }
+  75% {
+    box-shadow: 0 -0.4em 0 0 currentcolor;
+  }
+  87% {
+    box-shadow: 0.4em -0.4em 0 0 currentcolor;
+  }
+}
+
+.dark {
+  .is-loading {
+    color: color.$gold;
+    text-shadow: size.$sp02 size.$sp01 size.$sp04 color.$blue-violet;
+  }
+}

@@ -1,61 +1,64 @@
+@use "@/styles/abstracts/breakpoint";
+@use "@/styles/abstracts/color";
+@use "@/styles/abstracts/spacing";
+@use "@/styles/abstracts/size";
+
 .cart-item {
-    padding: 6px 20px;
-    background: #fff;
-    margin-top: 20px;
-    border-radius: 4px;
-    box-shadow: 2px 4px 6px rgba(0, 0, 0, 0.05);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  
-  .cart-item h3,
-  .cart-item .icons {
-    display: inline-block;
-  }
-  
-  .cart-item .icons {
-    text-align: right;
-  }
-  
-  .cart-item i {
-    font-size: 1.4em;
-    margin-left: 6px;
-    cursor: pointer;
-    color: #bbb;
-    transition: 0.2s linear all;
-  }
-  
-  .cart-item i:hover {
-    scale: 1.04;
-  }
-  
-  .cart-item .fav {
-    color: red;
-  }
-  
-  .cart-item i.active,
-  .cart-item i:hover {
-    color: #ecb732;
-  }
-  
-  /* Dark mode */
-  .dark .cart-item {
-    background: #333;
-    color: #eee;
-    box-shadow: 2px 4px 6px rgba(255, 255, 255, 0.05);
-  }
-  
-  .dark .cart-item .fav {
-    color: red;
-  }
-  
-  .dark .cart-item i {
-    color: #888;
-  }
-  
-  .dark .cart-item i.active,
-  .dark .cart-item i:hover {
-    color: #ecb732;
-  }
-  
+  padding: spacing.$spacing-xxs spacing.$spacing-s;
+  background: color.$light;
+  margin-top: spacing.$spacing-s;
+  border-radius: spacing.$spacing-base;
+  box-shadow: size.$sp02 size.$sp04 size.$sp12 color.$dark;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cart-item h3,
+.cart-item .icons {
+  display: inline-block;
+}
+
+.cart-item .icons {
+  text-align: right;
+}
+
+.cart-item i {
+  font-size: 1.4em;
+  margin-left: spacing.$spacing-xxs;
+  cursor: pointer;
+  color: color.$light;
+  transition: 0.2s linear all;
+}
+
+.cart-item i:hover {
+  scale: 1.04;
+}
+
+.cart-item .fav {
+  color: color.$red;
+}
+
+.cart-item i.active,
+.cart-item i:hover {
+  color: color.$gold;
+}
+
+.dark .cart-item {
+  background: color.$dark;
+  color: color.$light;
+  box-shadow: size.$sp02 size.$sp04 size.$sp12 color.$light;
+}
+
+.dark .cart-item .fav {
+  color: color.$red;
+}
+
+.dark .cart-item i {
+  color: color.$dark50;
+}
+
+.dark .cart-item i.active,
+.dark .cart-item i:hover {
+  color: color.$gold;
+}

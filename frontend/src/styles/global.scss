@@ -1,30 +1,24 @@
-// 1. Abstracts (variables, mixins, functions)
-@use '@/styles/abstracts' as *;
+@use "@/styles/abstracts/size";
+@use "@/styles/abstracts/color";
+@use "@/styles/abstracts/spacing";
+@use "@/styles/abstracts/breakpoint";
 
-// 2. Base styles
-@use '@/styles/base/typography';
+@use "@/styles/base/typography";
+@use "@/styles/layout/container";
+@use "@/styles/layout/print";
+@use "@/styles/components/header";
+@use "@/styles/components/form";
+@use "@/styles/components/filter";
+@use "@/styles/components/cart-item";
+@use "@/styles/components/loading" as *;
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&family=VT323&display=swap");
 
-// 3. Layout styles
-@use '@/styles/layout/container';
-@use '@/styles/layout/print';
-
-// 4. Component styles
-@use '@/styles/components/header';
-@use '@/styles/components/form';
-@use '@/styles/components/filter';
-@use '@/styles/components/cart-item';
-@use '@/styles/components/loading' as *;
-
-// 5. Optional: Move this to `base/_fonts.scss` if you prefer
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&family=VT323&display=swap');
-
-// 6. Global base rules
 html,
 body {
   box-sizing: border-box;
-  background: #f2f2f2;
-  color: #444;
-  font-family: 'Poppins', sans-serif;
+  background: color.$light;
+  color: color.$dark;
+  font-family: "Poppins", sans-serif;
   margin: 0;
   padding: 0;
   height: 100vh;
@@ -39,7 +33,7 @@ img {
 
 .dark {
   body {
-    background: #1e1e1e;
-    color: #f0f0f0;
+    background: color.$dark;
+    color: color.$light;
   }
 }
