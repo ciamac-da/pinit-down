@@ -7,11 +7,16 @@
   padding: spacing.$spacing-xxs spacing.$spacing-s;
   background: color.$light;
   margin-top: spacing.$spacing-s;
-  border-radius: spacing.$spacing-base;
-  box-shadow: size.$sp02 size.$sp04 size.$sp12 color.$dark;
+  border-radius: size.$sp12;
+  box-shadow: size.$sp02 size.$sp04 size.$sp24 color.$dark;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  transition: 0.2s linear all;
+}
+
+.cart-item:hover {
+  scale: 1.1;
 }
 
 .cart-item h3,
@@ -27,7 +32,7 @@
   font-size: 1.4em;
   margin-left: spacing.$spacing-xxs;
   cursor: pointer;
-  color: color.$light;
+  color: color.$dark50;
   transition: 0.2s linear all;
 }
 
@@ -47,7 +52,7 @@
 .dark .cart-item {
   background: color.$dark;
   color: color.$light;
-  box-shadow: size.$sp02 size.$sp04 size.$sp12 color.$light;
+  box-shadow: size.$sp02 size.$sp04 size.$sp24 color.$light;
 }
 
 .dark .cart-item .fav {

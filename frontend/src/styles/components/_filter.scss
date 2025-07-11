@@ -13,13 +13,17 @@
 }
 
 .filter button {
+  display: flex;
+  flex-direction: row;
   color: color.$light;
   background: color.$blue-violet;
-  border-radius: spacing.$spacing-base;
+  border-radius: size.$sp04;
   border: none;
   cursor: pointer;
   padding: spacing.$spacing-xxs;
   transition: 0.2s linear all;
+  align-items: center;
+  gap: spacing.$spacing-xxs;
 }
 
 .filter button.active {
@@ -27,15 +31,13 @@
   color: color.$light;
   font-weight: bold;
   box-shadow: 0 size.$sp02 size.$sp04 color.$dark;
-  scale: 1.2;
+  transform: rotate(-7deg);
 }
 
 .filter button.active:hover {
-  scale: 1.2;
 }
 
 .filter button:hover {
-  scale: 1.05;
 }
 
 .filter button.delete-all {

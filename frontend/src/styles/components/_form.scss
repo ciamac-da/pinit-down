@@ -17,8 +17,10 @@
 
 .submit-form input {
   border: none;
+  height: size.$sp32;
   width: inherit;
   padding: spacing.$spacing-xxs;
+  border-radius: size.$sp12;
 }
 
 .submit-form input:focus,
@@ -28,11 +30,14 @@
 }
 
 .submit-form button {
+  display: flex;
+  flex-direction: row;
+  gap: spacing.$spacing-xxs;
+  align-items: center;
   background-color: color.$gold;
   color: color.$light;
   border: none;
   cursor: pointer;
-  width: size.$sp72;
   transition: 0.2s linear all;
   border-radius: spacing.$spacing-base;
 }

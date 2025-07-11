@@ -39,7 +39,6 @@ header {
     margin: 0;
     font-size: 20px;
     color: color.$light;
-    transform: rotate(2deg);
 
     @include breakpoint.media-breakpoint-up(sm) {
       font-size: 28px;

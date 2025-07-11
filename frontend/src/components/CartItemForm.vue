@@ -1,7 +1,10 @@
 <template>
   <form class="submit-form" @submit.prevent="handleSubmit">
-    <input type="text" v-model="newCartItem" placeholder="I need to..." />
-    <button>Add Item</button>
+    <input type="text" v-model="newCartItem" placeholder="I need..." />
+    <button>
+      <i class="material-icons">add_shopping_cart </i>
+      Add Item
+    </button>
   </form>
 </template>
 
@@ -16,14 +19,14 @@ export default {
     const newCartItem = ref("");
 
     const handleSubmit = () => {
-  if (newCartItem.value.length > 0) {
-    cartStore.addCartItem({
-      title: newCartItem.value,
-      isFav: false
-    })
-    newCartItem.value = ""
-  }
-}
+      if (newCartItem.value.length > 0) {
+        cartStore.addCartItem({
+          title: newCartItem.value,
+          isFav: false,
+        });
+        newCartItem.value = "";
+      }
+    };
 
     return { handleSubmit, newCartItem };
   },
