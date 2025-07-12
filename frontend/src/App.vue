@@ -15,7 +15,7 @@
       <div class="cart-item-list" v-if="filter === 'All'">
         <p>
           You have {{ totalCount }}
-          {{ totalCount <= 1 ? "Cart Item" : "Cart Items" }}
+          {{ totalCount <= 1 ? "Item" : "Items" }}
         </p>
         <div v-for="cartItem in cartItems" :key="cartItem.id">
           <CartItemDetails :cartItem="cartItem" />
@@ -25,7 +25,7 @@
       <div class="cart-item-list" v-if="filter === 'Favs'">
         <p>
           You have {{ favCount }} Fav
-          {{ favCount <= 1 ? "Cart Item" : "Cart Items" }}
+          {{ favCount <= 1 ? "Item" : "Items" }}
         </p>
         <div v-for="cartItem in favs">
           <CartItemDetails :cartItem="cartItem" />
