@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 export const useCartStore = defineStore('cartStore', {
   state: () => ({
     cartItems: [],
@@ -29,7 +31,7 @@ export const useCartStore = defineStore('cartStore', {
     async getCartItems() {
       this.isLoading = true
       try {
-        const res = await fetch("http://localhost:3000/cart-items")
+        const res = await fetch(`${API_BASE_URL}/cart-items`)
         const data = await res.json()
 
         await this.wait(800) // ⏱️ Delay
@@ -44,7 +46,7 @@ export const useCartStore = defineStore('cartStore', {
     async addCartItem(cartItem) {
       this.isLoading = true
       try {
-        const res = await fetch("http://localhost:3000/cart-items", {
+        const res = await fetch(`${API_BASE_URL}/cart-items`, {
           method: 'POST',
           body: JSON.stringify(cartItem),
           headers: { 'Content-Type': 'application/json' }
@@ -73,7 +75,7 @@ export const useCartStore = defineStore('cartStore', {
       this.isLoading = true
 
       try {
-        const res = await fetch(`http://localhost:3000/cart-items/${id}`, {
+        const res = await fetch(`${API_BASE_URL}/cart-items/${id}`, {
           method: 'PATCH',
           body: JSON.stringify({ isFav: cartItem.isFav }),
           headers: { 'Content-Type': 'application/json' }
@@ -96,7 +98,7 @@ export const useCartStore = defineStore('cartStore', {
       this.cartItems = this.cartItems.filter(t => t._id !== id)
 
       try {
-        const res = await fetch(`http://localhost:3000/cart-items/${id}`, {
+        const res = await fetch(`${API_BASE_URL}/cart-items/${id}`, {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' }
         })
@@ -116,7 +118,7 @@ export const useCartStore = defineStore('cartStore', {
     async deleteAllCartItems() {
       this.isLoading = true
       try {
-        const res = await fetch("http://localhost:3000/cart-items", {
+        const res = await fetch(`${API_BASE_URL}/cart-items`, {
           method: 'DELETE'
         })
     
@@ -133,6 +135,5 @@ export const useCartStore = defineStore('cartStore', {
         this.isLoading = false
       }
     }
-    
   }
 })
