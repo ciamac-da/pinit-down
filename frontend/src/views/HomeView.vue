@@ -12,7 +12,6 @@ import LoadingSpinner from "@/components/LoadingSpinner.vue";
 import LoginForm from "@/components/LoginForm.vue";
 import RegisterForm from "@/components/RegisterForm.vue";
 import ForgotPasswordModal from "@/components/ForgotPasswordModal.vue";
-import "@/styles/global.scss";
 
 export default {
   components: {
@@ -357,5 +356,9 @@ export default {
   align-items: center;
   z-index: 1000;
   backdrop-filter: blur(size.$sp04);
+}
+
+.cart-item-list {
+  margin-top: spacing.$spacing-2-xl;
 }
 </style>

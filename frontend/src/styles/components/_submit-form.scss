@@ -5,22 +5,30 @@
 
 .submit-form {
   display: flex;
+  flex-direction: column;
   margin: auto;
-  width: 70%;
+  width: 100%;
   gap: spacing.$spacing-xxs;
   justify-content: center;
   padding: spacing.$spacing-l 0 spacing.$spacing-s 0;
   border: none;
   box-shadow: none;
   max-width: 83.75rem;
+
+  @include breakpoint.media-breakpoint-up(sm) {
+    flex-direction: row;
+    width: 70%;
+    }
 }
 
 .submit-form input {
   border: none;
-  height: size.$sp32;
+  align-self: center;
+  height: size.$sp40;
   width: inherit;
   padding: spacing.$spacing-xxs;
   border-radius: size.$sp12;
+  width: -webkit-fill-available;
 }
 
 .submit-form input:focus,
@@ -36,10 +44,16 @@
   align-items: center;
   background-color: color.$gold;
   color: color.$light;
+  padding: spacing.$spacing-xs;
+  justify-content: center;
   border: none;
   cursor: pointer;
   transition: 0.2s linear all;
   border-radius: spacing.$spacing-base;
+
+  @include breakpoint.media-breakpoint-up(sm) {
+    padding: spacing.$spacing-xxs;
+    }
 }
 
 .submit-form button:hover {

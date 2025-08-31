@@ -73,7 +73,7 @@
           <input
             v-model="formData.name"
             type="text"
-            placeholder="Full Name"
+            placeholder="Name"
             required
             :disabled="isLoading"
             autocomplete="name"

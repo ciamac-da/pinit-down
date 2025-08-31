@@ -5,11 +5,16 @@
 
 .filter {
   display: flex;
+  flex-direction: column;
   gap: spacing.$spacing-xs;
   justify-content: flex-end;
   margin: auto;
   text-align: center;
   padding-top: spacing.$spacing-xl;
+
+  @include breakpoint.media-breakpoint-up(sm) {
+    flex-direction: row;
+    }
 }
 
 .filter button {
@@ -20,10 +25,18 @@
   border-radius: size.$sp04;
   border: none;
   cursor: pointer;
-  padding: spacing.$spacing-xxs;
+  padding: spacing.$spacing-xs;
   transition: 0.2s linear all;
   align-items: center;
   gap: spacing.$spacing-xxs;
+
+  @include breakpoint.media-breakpoint-up(sm) {
+    padding: spacing.$spacing-xxs;
+    }
+}
+
+.filter button:hover {
+  transform: scale(1.04);
 }
 
 .filter button.active {
@@ -31,15 +44,12 @@
   color: color.$light;
   font-weight: bold;
   box-shadow: 0 size.$sp02 size.$sp04 color.$dark;
-  transform: rotate(-7deg);
-}
+  transform: scale(1.04);
 
-.filter button.active:hover {
+  @include breakpoint.media-breakpoint-up(sm) {
+    transform: rotate(-7deg);
+    }
 }
-
-.filter button:hover {
-}
-
 .filter button.delete-all {
   background: color.$danger;
   color: color.$light;

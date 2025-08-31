@@ -3,32 +3,35 @@
 @use "@/styles/abstracts/spacing";
 @use "@/styles/abstracts/size";
 
-.cart-item {
+.cart-items {
   padding: spacing.$spacing-xxs spacing.$spacing-s;
   background: color.$light;
   margin-top: spacing.$spacing-s;
   border-radius: size.$sp12;
   box-shadow: size.$sp02 size.$sp04 size.$sp24 color.$dark;
-  display: flex;
   justify-content: space-between;
   align-items: center;
   transition: 0.2s linear all;
-}
 
-.cart-item:hover {
-  scale: 1.1;
-}
+  .cart-items:hover {
+    scale: 1.1;
+  }
 
-.cart-item h3,
-.cart-item .icons {
+  .cart-item {
+    display: grid;
+    grid-template-columns: 11fr 2fr;
+h3,
+.icon {
   display: inline-block;
+  word-break: break-word;
 }
 
-.cart-item .icons {
+.icon {
+  align-content: center;
   text-align: right;
 }
 
-.cart-item i {
+i {
   font-size: 1.4em;
   margin-left: spacing.$spacing-xxs;
   cursor: pointer;
@@ -36,34 +39,28 @@
   transition: 0.2s linear all;
 }
 
-.cart-item i:hover {
+i:hover {
   scale: 1.04;
 }
 
-.cart-item .fav {
+.fav {
   color: color.$danger;
 }
 
-.cart-item i.active,
-.cart-item i:hover {
+i.active,
+i:hover {
   color: color.$gold;
 }
-
-.dark .cart-item {
-  background: color.$dark;
-  color: color.$light;
-  box-shadow: size.$sp02 size.$sp04 size.$sp24 color.$light;
+}
 }
 
-.dark .cart-item .fav {
-  color: color.$danger;
-}
+.dark {
 
-.dark .cart-item i {
-  color: color.$dark50;
-}
-
-.dark .cart-item i.active,
-.dark .cart-item i:hover {
-  color: color.$gold;
+  .cart-item {
+    color: color.$light;
+    box-shadow: size.$sp02 size.$sp04 size.$sp24 color.$light;
+  }
+  h3 {
+    color: color.$dark;
+  }
 }

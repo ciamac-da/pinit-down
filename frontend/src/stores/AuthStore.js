@@ -103,6 +103,81 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    // Request password reset
+    async forgotPassword(email) {
+      this.isLoading = true
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to send reset email')
+        }
+
+        return { success: true, message: data.message }
+      } catch (error) {
+        console.error('Forgot password error:', error)
+        return { success: false, error: error.message }
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    // Verify reset token
+    async verifyResetToken(token) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/verify-reset-token`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Invalid reset token')
+        }
+
+        return { success: true, user: data.user }
+      } catch (error) {
+        console.error('Verify reset token error:', error)
+        return { success: false, error: error.message }
+      }
+    },
+
+    // Reset password
+    async resetPassword(token, password) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token, password }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to reset password')
+        }
+
+        return { success: true }
+      } catch (error) {
+        console.error('Reset password error:', error)
+        return { success: false, error: error.message }
+      }
+    },
+
     // Logout user
     logout() {
       this.token = null

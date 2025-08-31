@@ -25,7 +25,7 @@ export default {
 
 <template>
   <form class="submit-form" @submit.prevent="handleSubmit">
-    <input type="text" v-model="newCartItem" placeholder="I need..." />
+    <input type="text" v-model="newCartItem" placeholder="New Item..." />
     <button>
       <i class="material-icons">add_shopping_cart </i>
       Add Item

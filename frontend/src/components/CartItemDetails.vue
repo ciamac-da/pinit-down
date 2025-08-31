@@ -13,7 +13,8 @@ export default {
 </script>
 
 <template>
-  <div class="cart-item">
+  <div class="cart-items">
+    <div class="cart-item">
     <h3>{{ cartItem.title }}</h3>
     <div class="icon">
       <i @click="cartStore.deleteCartItem(cartItem._id)" class="material-icons"
@@ -25,5 +26,6 @@ export default {
         >favorite</i
       >
     </div>
+  </div>
   </div>
 </template>
