@@ -1,0 +1,174 @@
+@use "@/styles/abstracts/breakpoint";
+@use "@/styles/abstracts/color";
+@use "@/styles/abstracts/spacing";
+@use "@/styles/abstracts/size";
+
+.auth-modal {
+    background: color.$gradient;
+    border-radius: spacing.$spacing-xs;
+    box-shadow: 0 size.$sp20 size.$sp40 rgba(color.$dark, 0.15);
+    width: 100%;
+    max-width: 28.125rem;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    margin: spacing.$spacing-xs;
+  
+  .close-btn {
+    position: absolute;
+    top: spacing.$spacing-xs;
+    right: spacing.$spacing-xs;
+    background: none;
+    border: none;
+    font-size: size.$sp28;
+    color: color.$light;
+    cursor: pointer;
+    z-index: 1001;
+    width: size.$sp28;
+    height: size.$sp28;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+
+    @include breakpoint.media-breakpoint-up(sm) {
+        font-size: size.$sp32;
+    }
+    &:hover {
+        color: color.$dark50;
+        background: color.$light;
+      }
+  }
+  
+  .auth-form {
+    padding: spacing.$spacing-l;
+  }
+  
+  .auth-form h2 {
+    text-align: center;
+    margin-bottom: 0.5rem;
+    color: color.$light;
+    font-size: size.$sp24;
+    font-weight: 600;
+
+    @include breakpoint.media-breakpoint-up(sm) {
+        font-size: size.$sp28;
+    }
+  }
+  
+  .auth-subtitle {
+    text-align: center;
+    color: color.$light;
+    margin-bottom: spacing.$spacing-m;
+    font-size: size.$sp16;
+
+    @include breakpoint.media-breakpoint-up(sm) {
+        font-size: size.$sp20;
+    }
+  }
+  
+  .form-group {
+    margin-bottom: spacing.$spacing-s;
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: spacing.$spacing-xs;
+    border: size.$sp02 solid color.$light;
+    border-radius: spacing.$spacing-xxs;
+    font-size: size.$sp16;
+    transition: all 0.3s ease;
+    background: color.$light;
+    max-width: -webkit-fill-available;
+  }
+  
+  .form-group input:focus {
+    outline: none;
+    border-color: color.$light50;
+    background: color.$light;
+    box-shadow: 0 0 0 size.$sp04 rgba(color.$dark50, 0.1);
+  }
+  
+  .form-group input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .error-message {
+    background: color.$light;
+    color: color.$danger;
+    padding: spacing.$spacing-xs;
+    border-radius: spacing.$spacing-xxs;
+    margin-bottom: spacing.$spacing-m;
+    text-align: center;
+    border: size.$sp01 solid color.$danger;
+    font-size: size.$sp16;
+    font-weight: 700;
+  }
+  
+  .auth-button {
+    width: 100%;
+    background: color.$blue-violet;
+    color: color.$light;
+    border: none;
+    padding: spacing.$spacing-xs;
+    border-radius: spacing.$spacing-xxs;
+    font-size: size.$sp16;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: size.$sp01 * 0.5;
+
+    @include breakpoint.media-breakpoint-up(sm) {
+        font-size: size.$sp16;
+    }
+  }
+  
+  .auth-button:hover:not(:disabled) {
+    transform: translateY(size.$sp02 * -1);
+    box-shadow: 0 spacing.$spacing-xxs spacing.$spacing-s rgba(color.$dark50, 0.3);
+  }
+  
+  .auth-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  
+  .forgot-password {
+    text-align: center;
+    margin: spacing.$spacing-s 0;
+    padding-top: spacing.$spacing-xs;
+    border-top: size.$sp01 solid color.$light;
+  }
+  
+  .auth-switch {
+    text-align: center;
+    margin-top: spacing.$spacing-m;
+    color: color.$light;
+    font-size: size.$sp16;
+  }
+  
+  .link-button {
+    background: none;
+    border: none;
+    color: color.$blue-violet;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: inherit;
+    font-weight: 700;
+    margin-left: spacing.$spacing-xxs;
+  }
+  
+  .link-button:hover {
+    color: color.$light50;
+  }
+  
+  .forgot-password .link-button {
+    margin-left: 0;
+    font-size: size.$sp16;
+  }
+}

@@ -41,7 +41,7 @@
 }
 
 .cart-item .fav {
-  color: color.$red;
+  color: color.$danger;
 }
 
 .cart-item i.active,
@@ -56,7 +56,7 @@
 }
 
 .dark .cart-item .fav {
-  color: color.$red;
+  color: color.$danger;
 }
 
 .dark .cart-item i {

@@ -7,7 +7,8 @@
 @use "@/styles/layout/container";
 @use "@/styles/layout/print";
 @use "@/styles/components/header";
-@use "@/styles/components/form";
+@use "@/styles/components/submit-form";
+@use "@/styles/components/register-login-form";
 @use "@/styles/components/filter";
 @use "@/styles/components/cart-item";
 @use "@/styles/components/loading" as *;
@@ -22,6 +23,7 @@ body {
   margin: 0;
   padding: 0;
   height: 100vh;
+  max-width: 100%;
   overscroll-behavior: none;
   user-select: none;
 }

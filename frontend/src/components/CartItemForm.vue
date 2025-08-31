@@ -1,13 +1,3 @@
-<template>
-  <form class="submit-form" @submit.prevent="handleSubmit">
-    <input type="text" v-model="newCartItem" placeholder="I need..." />
-    <button>
-      <i class="material-icons">add_shopping_cart </i>
-      Add Item
-    </button>
-  </form>
-</template>
-
 <script>
 import { ref } from "vue";
 import { useCartStore } from "@/stores/CartStore";
@@ -32,3 +22,13 @@ export default {
   },
 };
 </script>
+
+<template>
+  <form class="submit-form" @submit.prevent="handleSubmit">
+    <input type="text" v-model="newCartItem" placeholder="I need..." />
+    <button>
+      <i class="material-icons">add_shopping_cart </i>
+      Add Item
+    </button>
+  </form>
+</template>

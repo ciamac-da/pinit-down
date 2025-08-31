@@ -8,12 +8,34 @@ header {
   text-align: center;
   background: color.$blue-violet;
   display: flex;
-  padding: 0 spacing.$spacing-s;
+  padding: spacing.$spacing-base;
   flex-direction: row;
   justify-content: center;
   align-items: center;
+  width: -webkit-fill-available;
 
-  a {
+  .header-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    width: inherit;
+    max-width: 83.75rem;
+
+    @include breakpoint.media-breakpoint-up(sm) {
+    flex-direction: row;
+    }
+  }
+  @include breakpoint.media-breakpoint-up(sm) {
+  padding: spacing.$spacing-xxs 0;
+  }
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+
+  .logo {
     @include breakpoint.media-breakpoint-up(sm) {
       transform: rotate(-10deg);
       transition: 0.5s linear all;
@@ -24,51 +46,122 @@ header {
         transform: rotate(350deg) !important;
       }
     }
-  }
-  img {
-    max-width: size.$sp36;
-    max-height: size.$sp36;
-    @include breakpoint.media-breakpoint-up(sm) {
-      max-width: size.$sp72;
-      max-height: size.$sp72;
-      cursor: pointer;
+
+    img {
+      max-width: size.$sp24;
+      max-height: size.$sp24;
+
+      @include breakpoint.media-breakpoint-up(sm) {
+        max-width: size.$sp48;
+        max-height: size.$sp48;
+        cursor: pointer;
+      }
     }
   }
+}
 
-  h1 {
-    margin: 0;
-    font-size: 20px;
+h1 {
+  margin: 0;
+  font-size: size.$sp16;
+  color: color.$light;
+
+  @include breakpoint.media-breakpoint-up(sm) {
+    font-size: size.$sp20;
+    }
+}
+
+.header-actions {
+  display: flex;
+  gap: spacing.$spacing-xs;
+  margin: spacing.$spacing-xxs 0;
+  align-self: flex-end;
+  padding-right: spacing.$spacing-xxs;
+
+  .user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin-right: spacing.$spacing-xxs;
+
+    span {
+      color: color.$light;
+    }
+
+    .user-greeting {
+      font-weight: 600;
+      font-size: size.$sp12;
+
+      @include breakpoint.media-breakpoint-up(sm) {
+        font-size: size.$sp16;
+        }
+    }
+
+    .user-email {
+      font-size: size.$sp08;
+      opacity: 0.8;
+
+      @include breakpoint.media-breakpoint-up(sm) {
+        font-size: size.$sp12;
+        }
+    }
+
+  }
+
+  .logout-btn {
+    background: transparent;
     color: color.$light;
+    border: none;
+    border-radius: spacing.$spacing-xxs;
+    padding: spacing.$spacing-xxs spacing.$spacing-xs;
+    font-size: size.$sp12;
+    font-weight: 600;
+    cursor: pointer;
+    border: size.$sp01 color.$light solid;
+    transition: all 0.3s ease;
 
     @include breakpoint.media-breakpoint-up(sm) {
-      font-size: 28px;
-      padding-top: spacing.$spacing-s;
-      margin-left: spacing.$spacing-xs;
-    }
+    font-size: size.$sp16;
+      }
+  }
+
+  .logout-btn:hover {
+    background: color.$gold;
+    transform: translateY(size.$sp01 * -1);
+    box-shadow: 0 size.$sp04 size.$sp12 color.$gold;
   }
 
   .theme-toggle {
     position: absolute;
-    right: spacing.$spacing-xs;
     top: 0;
+    right: spacing.$spacing-xxs;
     cursor: pointer;
     padding: spacing.$spacing-xxs;
     background: transparent;
     border: none;
     transition: 0.3s ease-in-out transform;
 
+
     &:hover {
       transform: rotate(360deg);
     }
 
-    i {
+    i {      
       color: color.$gold;
-      font-size: 28px;
+      font-size: size.$sp20;
+
+      @include breakpoint.media-breakpoint-up(sm) {
+      font-size: size.$sp24;
+      }
     }
 
     @include breakpoint.media-breakpoint-up(sm) {
+      position: static;
       top: spacing.$spacing-s;
       right: spacing.$spacing-xs;
     }
+  }
+  @include breakpoint.media-breakpoint-up(sm) {
+    margin: 0;
+    align-items: center;
   }
 }

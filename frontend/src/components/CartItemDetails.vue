@@ -1,3 +1,17 @@
+<script>
+import { useCartStore } from "@/stores/CartStore";
+
+export default {
+  props: ["cartItem"],
+
+  setup() {
+    const cartStore = useCartStore();
+
+    return { cartStore };
+  },
+};
+</script>
+
 <template>
   <div class="cart-item">
     <h3>{{ cartItem.title }}</h3>
@@ -13,17 +27,3 @@
     </div>
   </div>
 </template>
-
-<script>
-import { useCartStore } from "@/stores/CartStore";
-
-export default {
-  props: ["cartItem"],
-
-  setup() {
-    const cartStore = useCartStore();
-
-    return { cartStore };
-  },
-};
-</script>
