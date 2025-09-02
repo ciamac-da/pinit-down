@@ -5,6 +5,9 @@ export class User {
     this.email = userData.email
     this.password = userData.password
     this.name = userData.name
+    this.isEmailVerified = userData.isEmailVerified || false
+    this.emailVerificationToken = userData.emailVerificationToken || null
+    this.emailVerificationExpires = userData.emailVerificationExpires || null
     this.resetPasswordToken = userData.resetPasswordToken || null
     this.resetPasswordExpires = userData.resetPasswordExpires || null
     this.createdAt = new Date()
@@ -35,6 +38,14 @@ export class User {
     })
   }
 
+  static async findByVerificationToken(db, token) {
+    const users = db.collection('users')
+    return await users.findOne({ 
+      emailVerificationToken: token,
+      emailVerificationExpires: { $gt: new Date() }
+    })
+  }
+
   static async updateResetToken(db, email, token, expires) {
     const users = db.collection('users')
     return await users.updateOne(
@@ -44,6 +55,37 @@ export class User {
           resetPasswordToken: token,
           resetPasswordExpires: expires,
           updatedAt: new Date()
+        }
+      }
+    )
+  }
+
+  static async updateVerificationToken(db, email, token, expires) {
+    const users = db.collection('users')
+    return await users.updateOne(
+      { email },
+      { 
+        $set: { 
+          emailVerificationToken: token,
+          emailVerificationExpires: expires,
+          updatedAt: new Date()
+        }
+      }
+    )
+  }
+
+  static async verifyEmail(db, userId) {
+    const users = db.collection('users')
+    return await users.updateOne(
+      { _id: new ObjectId(userId) },
+      { 
+        $set: { 
+          isEmailVerified: true,
+          updatedAt: new Date()
+        },
+        $unset: {
+          emailVerificationToken: "",
+          emailVerificationExpires: ""
         }
       }
     )

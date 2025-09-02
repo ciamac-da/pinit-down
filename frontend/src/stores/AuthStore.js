@@ -33,7 +33,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    // Register new user
+    // Register new user (now requires email verification)
     async register(userData) {
       this.isLoading = true
       try {
@@ -51,15 +51,11 @@ export const useAuthStore = defineStore('auth', {
           throw new Error(data.error || 'Registration failed')
         }
 
-        // Store auth data
-        this.token = data.token
-        this.user = data.user
-        this.isAuthenticated = true
-        
-        localStorage.setItem('pinit_token', data.token)
-        localStorage.setItem('pinit_user', JSON.stringify(data.user))
-
-        return { success: true }
+        return { 
+          success: true, 
+          message: data.message,
+          requiresVerification: data.requiresVerification 
+        }
       } catch (error) {
         console.error('Registration error:', error)
         return { success: false, error: error.message }
@@ -68,7 +64,61 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    // Login user
+    // Verify email address
+    async verifyEmail(token) {
+      this.isLoading = true
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/verify-email`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ token }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Email verification failed')
+        }
+
+        return { success: true, message: data.message }
+      } catch (error) {
+        console.error('Email verification error:', error)
+        return { success: false, error: error.message }
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    // Resend verification email
+    async resendVerification(email) {
+      this.isLoading = true
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/resend-verification`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to resend verification email')
+        }
+
+        return { success: true, message: data.message }
+      } catch (error) {
+        console.error('Resend verification error:', error)
+        return { success: false, error: error.message }
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    // Login user (now checks for email verification)
     async login(credentials) {
       this.isLoading = true
       try {
@@ -83,6 +133,14 @@ export const useAuthStore = defineStore('auth', {
         const data = await response.json()
 
         if (!response.ok) {
+          if (data.requiresVerification) {
+            return { 
+              success: false, 
+              error: data.error, 
+              requiresVerification: true,
+              email: data.email 
+            }
+          }
           throw new Error(data.error || 'Login failed')
         }
 
@@ -118,6 +176,14 @@ export const useAuthStore = defineStore('auth', {
         const data = await response.json()
 
         if (!response.ok) {
+          if (data.requiresVerification) {
+            return { 
+              success: false, 
+              error: data.error, 
+              requiresVerification: true,
+              email: data.email 
+            }
+          }
           throw new Error(data.error || 'Failed to send reset email')
         }
 

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
-import ForgotPassword from '@/components/ForgotPassword.vue'
+import EmailVerification from '@/components/EmailVerification.vue'
+import ResetPassword from '@/components/ResetPassword.vue'
 
 const routes = [
   {
@@ -9,9 +10,14 @@ const routes = [
     component: HomeView
   },
   {
+    path: '/verify-email',
+    name: 'EmailVerification',
+    component: EmailVerification
+  },
+  {
     path: '/reset-password',
     name: 'ResetPassword',
-    component: ForgotPassword
+    component: ResetPassword
   }
 ]
 
