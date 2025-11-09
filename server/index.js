@@ -47,51 +47,84 @@ const dbName = 'pinit-down'
 let cartItems
 
 // Configure nodemailer transporter
-const createTransporter = () => {
-  if (process.env.EMAIL_SERVICE === 'gmail') {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      throw new Error('EMAIL_USER and EMAIL_PASSWORD must be set when EMAIL_SERVICE is gmail')
+let transporterPromise
+
+const initializeTransporter = async () => {
+  try {
+    if (process.env.EMAIL_SERVICE === 'gmail') {
+      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+        throw new Error('EMAIL_USER and EMAIL_PASSWORD must be set when EMAIL_SERVICE is gmail')
+      }
+
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD
+        }
+      })
+
+      await transporter.verify()
+      console.log('Gmail email transporter verified and ready.')
+      return transporter
     }
 
-    return nodemailer.createTransport({
-      service: 'gmail',
+    if (process.env.EMAIL_HOST) {
+      const transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST,
+        port: Number(process.env.EMAIL_PORT) || 587,
+        secure: process.env.EMAIL_SECURE === 'true',
+        auth: process.env.EMAIL_USER && process.env.EMAIL_PASSWORD ? {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD
+        } : undefined
+      })
+
+      await transporter.verify()
+      console.log('Custom email transporter verified and ready.')
+      return transporter
+    }
+
+    const testAccount = await nodemailer.createTestAccount()
+    console.log('Created Ethereal test account for email delivery.')
+    console.log(`Ethereal credentials — user: ${testAccount.user}, pass: ${testAccount.pass}`)
+    console.log('View test emails at https://ethereal.email/messages')
+
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
+        user: testAccount.user,
+        pass: testAccount.pass
       }
     })
-  }
 
-  // Default to console logging for development environments without SMTP configured
-  return {
-    sendMail: async (mailOptions) => {
-      console.warn('Email transporter not configured. Email would be sent:', mailOptions)
-      throw new Error('Email service is not configured')
-    }
-  }
-}
-
-let transporter
-
-try {
-  transporter = createTransporter()
-
-  if (typeof transporter.verify === 'function') {
-    transporter.verify()
-      .then(() => console.log('Email transporter verified and ready.'))
-      .catch((error) => console.error('Email transporter verification failed:', error))
-  }
-} catch (error) {
-  console.error('Failed to initialize email transporter:', error.message)
-}
-
-if (!transporter) {
-  transporter = {
-    sendMail: async () => {
-      throw new Error('Email service is not configured')
-    }
+    await transporter.verify()
+    console.log('Ethereal email transporter verified and ready.')
+    return transporter
+  } catch (error) {
+    console.error('Failed to initialize email transporter:', error)
+    return null
   }
 }
+
+const getTransporter = async () => {
+  if (!transporterPromise) {
+    transporterPromise = initializeTransporter()
+  }
+
+  const transporter = await transporterPromise
+
+  if (!transporter) {
+    transporterPromise = null
+  }
+
+  return transporter
+}
+
+// Kick off transporter initialization on startup so configuration issues surface immediately
+transporterPromise = initializeTransporter()
 
 // Helper function - JWT Token generation
 const generateToken = (userId) => {
@@ -267,11 +300,23 @@ app.post('/auth/resend-verification', [
       `
     }
 
-    await transporter.sendMail(mailOptions)
+    const transporter = await getTransporter()
 
-    res.json({ 
+    if (!transporter) {
+      console.error('Email transporter is unavailable. Cannot send verification email.')
+      return res.status(500).json({ error: 'Email service is currently unavailable. Please try again later.' })
+    }
+
+    const info = await transporter.sendMail(mailOptions)
+
+    const previewUrl = nodemailer.getTestMessageUrl?.(info)
+    if (previewUrl) {
+      console.log(`Verification email preview URL: ${previewUrl}`)
+    }
+
+    res.json({
       success: true,
-      message: 'Verification email sent! Please check your inbox.' 
+      message: 'Verification email sent! Please check your inbox.'
     })
   } catch (error) {
     console.error('Resend verification error:', error)
@@ -369,7 +414,19 @@ app.post('/auth/forgot-password', [
       `
     }
 
-    await transporter.sendMail(mailOptions)
+    const transporter = await getTransporter()
+
+    if (!transporter) {
+      console.error('Email transporter is unavailable. Cannot send reset email.')
+      return res.status(500).json({ error: 'Email service is currently unavailable. Please try again later.' })
+    }
+
+    const info = await transporter.sendMail(mailOptions)
+
+    const previewUrl = nodemailer.getTestMessageUrl?.(info)
+    if (previewUrl) {
+      console.log(`Password reset email preview URL: ${previewUrl}`)
+    }
 
     res.json({ message: 'Password reset email sent successfully.' })
   } catch (error) {
