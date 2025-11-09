@@ -47,27 +47,101 @@ const dbName = 'pinit-down'
 let cartItems
 
 // Configure nodemailer transporter
-const createTransporter = () => {
-  if (process.env.EMAIL_SERVICE === 'gmail') {
-    return nodemailer.createTransporter({
-      service: 'gmail',
+let transporterPromise
+
+const initializeTransporter = async () => {
+  try {
+    if (process.env.EMAIL_SERVICE === 'gmail') {
+      if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+        throw new Error('EMAIL_USER and EMAIL_PASSWORD must be set when EMAIL_SERVICE is gmail')
+      }
+
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD
+        }
+      })
+
+      await transporter.verify()
+      console.log('Gmail email transporter verified and ready.')
+      return transporter
+    }
+
+    if (process.env.EMAIL_SERVICE === 'ethereal' && process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+      const transporter = nodemailer.createTransport({
+        host: 'smtp.ethereal.email',
+        port: 587,
+        secure: false,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD
+        }
+      })
+
+      await transporter.verify()
+      console.log('Ethereal email transporter (env credentials) verified and ready.')
+      console.log('View test emails at https://ethereal.email/messages')
+      return transporter
+    }
+
+    if (process.env.EMAIL_HOST) {
+      const transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST,
+        port: Number(process.env.EMAIL_PORT) || 587,
+        secure: process.env.EMAIL_SECURE === 'true',
+        auth: process.env.EMAIL_USER && process.env.EMAIL_PASSWORD ? {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASSWORD
+        } : undefined
+      })
+
+      await transporter.verify()
+      console.log('Custom email transporter verified and ready.')
+      return transporter
+    }
+
+    const testAccount = await nodemailer.createTestAccount()
+    console.log('Created Ethereal test account for email delivery.')
+    console.log(`Ethereal credentials — user: ${testAccount.user}, pass: ${testAccount.pass}`)
+    console.log('View test emails at https://ethereal.email/messages')
+
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD
+        user: testAccount.user,
+        pass: testAccount.pass
       }
     })
-  }
-  
-  // Default to console logging for development
-  return {
-    sendMail: async (mailOptions) => {
-      console.log('Email would be sent:', mailOptions)
-      return { messageId: 'test-message-id' }
-    }
+
+    await transporter.verify()
+    console.log('Ethereal email transporter verified and ready.')
+    return transporter
+  } catch (error) {
+    console.error('Failed to initialize email transporter:', error)
+    return null
   }
 }
 
-const transporter = createTransporter()
+const getTransporter = async () => {
+  if (!transporterPromise) {
+    transporterPromise = initializeTransporter()
+  }
+
+  const transporter = await transporterPromise
+
+  if (!transporter) {
+    transporterPromise = null
+  }
+
+  return transporter
+}
+
+// Kick off transporter initialization on startup so configuration issues surface immediately
+transporterPromise = initializeTransporter()
 
 // Helper function - JWT Token generation
 const generateToken = (userId) => {
@@ -118,7 +192,7 @@ app.get('/', (req, res) => {
   res.json({ message: 'Pinit Down API is running!' })
 })
 
-// POST /auth/register - User Registration with Email Verification
+// POST /auth/register - User Registration without Email Verification
 app.post('/auth/register', [
   body('email').isEmail().normalizeEmail(),
   body('password').isLength({ min: 6 }),
@@ -142,47 +216,30 @@ app.post('/auth/register', [
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Generate verification token
-    const verificationToken = crypto.randomBytes(32).toString('hex')
-    const verificationExpires = new Date(Date.now() + 24 * 3600000) // 24 hours
-
-    // Create new user (not verified)
+    // Create new user (email verification disabled)
     const newUser = new User({
       email,
       password: hashedPassword,
       name,
-      isEmailVerified: false,
-      emailVerificationToken: verificationToken,
-      emailVerificationExpires: verificationExpires
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null
     })
 
     const result = await newUser.save(db)
+    const userId = result.insertedId
 
-    // Send verification email
-    const verificationUrl = `${FRONTEND_URL}/verify-email?token=${verificationToken}`
-    
-    const mailOptions = {
-      from: EMAIL_FROM,
-      to: email,
-      subject: 'Please verify your email - Pinit Down',
-      html: `
-        <h2>Welcome to Pinit Down!</h2>
-        <p>Hi ${name},</p>
-        <p>Thank you for registering with Pinit Down. Please click the link below to verify your email address:</p>
-        <a href="${verificationUrl}" style="display: inline-block; padding: 10px 20px; background-color: #8a2be2; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
-        <p>Or copy and paste this link into your browser:</p>
-        <p>${verificationUrl}</p>
-        <p>This link will expire in 24 hours.</p>
-        <p>If you didn't create this account, please ignore this email.</p>
-        <p>Best regards,<br>Pinit Down Team</p>
-      `
-    }
-
-    await transporter.sendMail(mailOptions)
+    // Generate token for immediate authentication
+    const token = generateToken(userId)
 
     res.status(201).json({
-      message: 'Registration successful! Please check your email to verify your account before logging in.',
-      requiresVerification: true
+      message: 'Registration successful',
+      token,
+      user: {
+        id: userId,
+        email,
+        name
+      }
     })
   } catch (error) {
     console.error('Registration error:', error)
@@ -260,11 +317,23 @@ app.post('/auth/resend-verification', [
       `
     }
 
-    await transporter.sendMail(mailOptions)
+    const transporter = await getTransporter()
 
-    res.json({ 
+    if (!transporter) {
+      console.error('Email transporter is unavailable. Cannot send verification email.')
+      return res.status(500).json({ error: 'Email service is currently unavailable. Please try again later.' })
+    }
+
+    const info = await transporter.sendMail(mailOptions)
+
+    const previewUrl = nodemailer.getTestMessageUrl?.(info)
+    if (previewUrl) {
+      console.log(`Verification email preview URL: ${previewUrl}`)
+    }
+
+    res.json({
       success: true,
-      message: 'Verification email sent! Please check your inbox.' 
+      message: 'Verification email sent! Please check your inbox.'
     })
   } catch (error) {
     console.error('Resend verification error:', error)
@@ -272,7 +341,7 @@ app.post('/auth/resend-verification', [
   }
 })
 
-// POST /auth/login - User Login (requires email verification)
+// POST /auth/login - User Login
 app.post('/auth/login', [
   body('email').isEmail().normalizeEmail(),
   body('password').exists()
@@ -290,15 +359,6 @@ app.post('/auth/login', [
     const user = await User.findByEmail(db, email)
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' })
-    }
-
-    // Check if email is verified
-    if (!user.isEmailVerified) {
-      return res.status(401).json({ 
-        error: 'Please verify your email before logging in',
-        requiresVerification: true,
-        email: user.email
-      })
     }
 
     // Check password
@@ -341,17 +401,7 @@ app.post('/auth/forgot-password', [
     // Find user
     const user = await User.findByEmail(db, email)
     if (!user) {
-      // Don't reveal if user exists or not for security
-      return res.json({ message: 'If the email exists, a password reset link has been sent.' })
-    }
-
-    // Check if email is verified
-    if (!user.isEmailVerified) {
-      return res.status(400).json({ 
-        error: 'Please verify your email first',
-        requiresVerification: true,
-        email: user.email
-      })
+      return res.status(404).json({ error: 'No account found with that email address.' })
     }
 
     // Generate reset token
@@ -381,12 +431,24 @@ app.post('/auth/forgot-password', [
       `
     }
 
-    await transporter.sendMail(mailOptions)
+    const transporter = await getTransporter()
 
-    res.json({ message: 'If the email exists, a password reset link has been sent.' })
+    if (!transporter) {
+      console.error('Email transporter is unavailable. Cannot send reset email.')
+      return res.status(500).json({ error: 'Email service is currently unavailable. Please try again later.' })
+    }
+
+    const info = await transporter.sendMail(mailOptions)
+
+    const previewUrl = nodemailer.getTestMessageUrl?.(info)
+    if (previewUrl) {
+      console.log(`Password reset email preview URL: ${previewUrl}`)
+    }
+
+    res.json({ message: 'Password reset email sent successfully.' })
   } catch (error) {
     console.error('Forgot password error:', error)
-    res.status(500).json({ error: 'Internal server error' })
+    res.status(500).json({ error: 'Unable to send password reset email. Please try again later.' })
   }
 })
 
