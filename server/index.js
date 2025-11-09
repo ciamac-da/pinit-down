@@ -23,9 +23,7 @@ dotenv.config({ path: '.env.local' })
 const app = express()
 const PORT = 3000
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret'
-const DEFAULT_FROM_ADDRESS = process.env.EMAIL_FROM || 'Pinit Down <noreply@pinitdown.com>'
-const RESEND_FROM_ADDRESS = process.env.RESEND_FROM || process.env.EMAIL_FROM || 'Pinit Down <onboarding@resend.dev>'
-const EMAIL_FROM = DEFAULT_FROM_ADDRESS
+const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@pinitdown.com'
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
 
 app.use(cors({
@@ -53,58 +51,6 @@ let transporterPromise
 
 const initializeTransporter = async () => {
   try {
-    if (process.env.RESEND_API_KEY) {
-      const resendFrom = RESEND_FROM_ADDRESS
-
-      if (!process.env.RESEND_FROM && !process.env.EMAIL_FROM) {
-        console.warn('RESEND_FROM not set. Using onboarding@resend.dev which is intended for testing only.')
-      }
-
-      console.log('Using Resend for transactional email delivery.')
-
-      return {
-        type: 'resend',
-        async sendMail({ from, to, subject, html, text }) {
-          const recipients = Array.isArray(to) ? to : [to]
-
-          const response = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              from: from || resendFrom,
-              to: recipients,
-              subject,
-              html,
-              text
-            })
-          })
-
-          let payload
-
-          try {
-            payload = await response.json()
-          } catch (parseError) {
-            throw new Error('Unexpected response from Resend email service.')
-          }
-
-          if (!response.ok) {
-            const errorMessage = payload?.message || payload?.error?.message || 'Failed to send email via Resend.'
-            throw new Error(errorMessage)
-          }
-
-          const messageId = payload?.id || payload?.data?.id
-          if (messageId) {
-            console.log(`Resend accepted email for delivery (id: ${messageId}).`)
-          }
-
-          return payload
-        }
-      }
-    }
-
     if (process.env.EMAIL_SERVICE === 'gmail') {
       if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
         throw new Error('EMAIL_USER and EMAIL_PASSWORD must be set when EMAIL_SERVICE is gmail')
@@ -119,7 +65,6 @@ const initializeTransporter = async () => {
       })
 
       await transporter.verify()
-      transporter.type = 'nodemailer'
       console.log('Gmail email transporter verified and ready.')
       return transporter
     }
@@ -136,7 +81,6 @@ const initializeTransporter = async () => {
       })
 
       await transporter.verify()
-      transporter.type = 'nodemailer'
       console.log('Ethereal email transporter (env credentials) verified and ready.')
       console.log('View test emails at https://ethereal.email/messages')
       return transporter
@@ -154,7 +98,6 @@ const initializeTransporter = async () => {
       })
 
       await transporter.verify()
-      transporter.type = 'nodemailer'
       console.log('Custom email transporter verified and ready.')
       return transporter
     }
@@ -175,7 +118,6 @@ const initializeTransporter = async () => {
     })
 
     await transporter.verify()
-    transporter.type = 'nodemailer'
     console.log('Ethereal email transporter verified and ready.')
     return transporter
   } catch (error) {
@@ -384,16 +326,9 @@ app.post('/auth/resend-verification', [
 
     const info = await transporter.sendMail(mailOptions)
 
-    if (transporter.type === 'resend') {
-      const resendId = info?.id || info?.data?.id
-      if (resendId) {
-        console.log(`Verification email dispatched via Resend (id: ${resendId}).`)
-      }
-    } else {
-      const previewUrl = nodemailer.getTestMessageUrl?.(info)
-      if (previewUrl) {
-        console.log(`Verification email preview URL: ${previewUrl}`)
-      }
+    const previewUrl = nodemailer.getTestMessageUrl?.(info)
+    if (previewUrl) {
+      console.log(`Verification email preview URL: ${previewUrl}`)
     }
 
     res.json({
@@ -505,16 +440,9 @@ app.post('/auth/forgot-password', [
 
     const info = await transporter.sendMail(mailOptions)
 
-    if (transporter.type === 'resend') {
-      const resendId = info?.id || info?.data?.id
-      if (resendId) {
-        console.log(`Password reset email dispatched via Resend (id: ${resendId}).`)
-      }
-    } else {
-      const previewUrl = nodemailer.getTestMessageUrl?.(info)
-      if (previewUrl) {
-        console.log(`Password reset email preview URL: ${previewUrl}`)
-      }
+    const previewUrl = nodemailer.getTestMessageUrl?.(info)
+    if (previewUrl) {
+      console.log(`Password reset email preview URL: ${previewUrl}`)
     }
 
     res.json({ message: 'Password reset email sent successfully.' })
