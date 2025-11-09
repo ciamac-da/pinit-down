@@ -1,51 +1,21 @@
 <script>
 import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { useAuthStore } from '@/stores/AuthStore'
+import { useRouter } from 'vue-router'
 
 export default {
   setup() {
-    const route = useRoute()
     const router = useRouter()
-    const authStore = useAuthStore()
 
-    const isLoading = ref(true)
-    const isVerified = ref(false)
+    const isLoading = ref(false)
+    const isVerified = ref(true)
     const error = ref('')
-    const message = ref('')
-
-    const verifyEmail = async () => {
-      const token = route.query.token
-
-      if (!token) {
-        error.value = 'Invalid verification link'
-        isLoading.value = false
-        return
-      }
-
-      try {
-        const result = await authStore.verifyEmail(token)
-
-        if (result.success) {
-          isVerified.value = true
-          message.value = result.message
-          
-          // Redirect to home page after 3 seconds
-          setTimeout(() => {
-            router.push('/')
-          }, 3000)
-        } else {
-          error.value = result.error || 'Email verification failed'
-        }
-      } catch (err) {
-        error.value = 'Something went wrong. Please try again.'
-      } finally {
-        isLoading.value = false
-      }
-    }
+    const message = ref('Email verification is no longer required. You can sign in with your credentials immediately after registering.')
 
     onMounted(() => {
-      verifyEmail()
+      // Redirect to home page after a short delay to keep prior UX similar
+      setTimeout(() => {
+        router.push('/')
+      }, 3000)
     })
 
     const goHome = () => {
@@ -74,7 +44,7 @@ export default {
 
       <div v-else-if="isVerified" class="success-state">
         <div class="success-icon">✅</div>
-        <h2>Email Verified Successfully!</h2>
+        <h2>Email Verification Not Required</h2>
         <p class="success-message">{{ message }}</p>
         <p>You will be redirected to the home page in a few seconds, or you can click the button below.</p>
         <button @click="goHome" class="home-button">
