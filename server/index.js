@@ -49,6 +49,10 @@ let cartItems
 // Configure nodemailer transporter
 const createTransporter = () => {
   if (process.env.EMAIL_SERVICE === 'gmail') {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      throw new Error('EMAIL_USER and EMAIL_PASSWORD must be set when EMAIL_SERVICE is gmail')
+    }
+
     return nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -57,17 +61,37 @@ const createTransporter = () => {
       }
     })
   }
-  
-  // Default to console logging for development
+
+  // Default to console logging for development environments without SMTP configured
   return {
     sendMail: async (mailOptions) => {
-      console.log('Email would be sent:', mailOptions)
-      return { messageId: 'test-message-id' }
+      console.warn('Email transporter not configured. Email would be sent:', mailOptions)
+      throw new Error('Email service is not configured')
     }
   }
 }
 
-const transporter = createTransporter()
+let transporter
+
+try {
+  transporter = createTransporter()
+
+  if (typeof transporter.verify === 'function') {
+    transporter.verify()
+      .then(() => console.log('Email transporter verified and ready.'))
+      .catch((error) => console.error('Email transporter verification failed:', error))
+  }
+} catch (error) {
+  console.error('Failed to initialize email transporter:', error.message)
+}
+
+if (!transporter) {
+  transporter = {
+    sendMail: async () => {
+      throw new Error('Email service is not configured')
+    }
+  }
+}
 
 // Helper function - JWT Token generation
 const generateToken = (userId) => {
@@ -315,8 +339,7 @@ app.post('/auth/forgot-password', [
     // Find user
     const user = await User.findByEmail(db, email)
     if (!user) {
-      // Don't reveal if user exists or not for security
-      return res.json({ message: 'If the email exists, a password reset link has been sent.' })
+      return res.status(404).json({ error: 'No account found with that email address.' })
     }
 
     // Generate reset token
@@ -348,10 +371,10 @@ app.post('/auth/forgot-password', [
 
     await transporter.sendMail(mailOptions)
 
-    res.json({ message: 'If the email exists, a password reset link has been sent.' })
+    res.json({ message: 'Password reset email sent successfully.' })
   } catch (error) {
     console.error('Forgot password error:', error)
-    res.status(500).json({ error: 'Internal server error' })
+    res.status(500).json({ error: 'Unable to send password reset email. Please try again later.' })
   }
 })
 
