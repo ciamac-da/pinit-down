@@ -12,6 +12,7 @@ export default {
     const isLoading = ref(false)
     const error = ref('')
     const success = ref(false)
+    const successMessage = ref('')
 
     const handleSubmit = async () => {
       error.value = ''
@@ -27,6 +28,7 @@ export default {
         const result = await authStore.forgotPassword(email.value)
         
         if (result.success) {
+          successMessage.value = result.message || 'Password reset email sent successfully.'
           success.value = true
         } else {
           error.value = result.error || 'Failed to send reset email'
@@ -47,6 +49,7 @@ export default {
       isLoading,
       error,
       success,
+      successMessage,
       handleSubmit,
       handleBackToLogin
     }
@@ -104,10 +107,10 @@ export default {
       <div class="success-icon">✉️</div>
       <h2>Check Your Email</h2>
       <p class="auth-subtitle">
-        We've sent a password reset link to {{ email }}
+        {{ successMessage }}
       </p>
       <p class="success-message">
-        Please check your inbox and follow the instructions to reset your password.
+        Please check your inbox (including spam and promotions folders) and follow the instructions to reset your password.
         The link will expire in 1 hour.
       </p>
       <button
