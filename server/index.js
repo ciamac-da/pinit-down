@@ -49,7 +49,11 @@ let cartItems
 // Configure nodemailer transporter
 const createTransporter = () => {
   if (process.env.EMAIL_SERVICE === 'gmail') {
-    return nodemailer.createTransporter({
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      throw new Error('EMAIL_USER and EMAIL_PASSWORD must be set when EMAIL_SERVICE is gmail')
+    }
+
+    return nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
@@ -57,17 +61,37 @@ const createTransporter = () => {
       }
     })
   }
-  
-  // Default to console logging for development
+
+  // Default to console logging for development environments without SMTP configured
   return {
     sendMail: async (mailOptions) => {
-      console.log('Email would be sent:', mailOptions)
-      return { messageId: 'test-message-id' }
+      console.warn('Email transporter not configured. Email would be sent:', mailOptions)
+      throw new Error('Email service is not configured')
     }
   }
 }
 
-const transporter = createTransporter()
+let transporter
+
+try {
+  transporter = createTransporter()
+
+  if (typeof transporter.verify === 'function') {
+    transporter.verify()
+      .then(() => console.log('Email transporter verified and ready.'))
+      .catch((error) => console.error('Email transporter verification failed:', error))
+  }
+} catch (error) {
+  console.error('Failed to initialize email transporter:', error.message)
+}
+
+if (!transporter) {
+  transporter = {
+    sendMail: async () => {
+      throw new Error('Email service is not configured')
+    }
+  }
+}
 
 // Helper function - JWT Token generation
 const generateToken = (userId) => {
@@ -118,7 +142,7 @@ app.get('/', (req, res) => {
   res.json({ message: 'Pinit Down API is running!' })
 })
 
-// POST /auth/register - User Registration with Email Verification
+// POST /auth/register - User Registration without Email Verification
 app.post('/auth/register', [
   body('email').isEmail().normalizeEmail(),
   body('password').isLength({ min: 6 }),
@@ -142,47 +166,30 @@ app.post('/auth/register', [
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Generate verification token
-    const verificationToken = crypto.randomBytes(32).toString('hex')
-    const verificationExpires = new Date(Date.now() + 24 * 3600000) // 24 hours
-
-    // Create new user (not verified)
+    // Create new user (email verification disabled)
     const newUser = new User({
       email,
       password: hashedPassword,
       name,
-      isEmailVerified: false,
-      emailVerificationToken: verificationToken,
-      emailVerificationExpires: verificationExpires
+      isEmailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null
     })
 
     const result = await newUser.save(db)
+    const userId = result.insertedId
 
-    // Send verification email
-    const verificationUrl = `${FRONTEND_URL}/verify-email?token=${verificationToken}`
-    
-    const mailOptions = {
-      from: EMAIL_FROM,
-      to: email,
-      subject: 'Please verify your email - Pinit Down',
-      html: `
-        <h2>Welcome to Pinit Down!</h2>
-        <p>Hi ${name},</p>
-        <p>Thank you for registering with Pinit Down. Please click the link below to verify your email address:</p>
-        <a href="${verificationUrl}" style="display: inline-block; padding: 10px 20px; background-color: #8a2be2; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
-        <p>Or copy and paste this link into your browser:</p>
-        <p>${verificationUrl}</p>
-        <p>This link will expire in 24 hours.</p>
-        <p>If you didn't create this account, please ignore this email.</p>
-        <p>Best regards,<br>Pinit Down Team</p>
-      `
-    }
-
-    await transporter.sendMail(mailOptions)
+    // Generate token for immediate authentication
+    const token = generateToken(userId)
 
     res.status(201).json({
-      message: 'Registration successful! Please check your email to verify your account before logging in.',
-      requiresVerification: true
+      message: 'Registration successful',
+      token,
+      user: {
+        id: userId,
+        email,
+        name
+      }
     })
   } catch (error) {
     console.error('Registration error:', error)
@@ -272,7 +279,7 @@ app.post('/auth/resend-verification', [
   }
 })
 
-// POST /auth/login - User Login (requires email verification)
+// POST /auth/login - User Login
 app.post('/auth/login', [
   body('email').isEmail().normalizeEmail(),
   body('password').exists()
@@ -290,15 +297,6 @@ app.post('/auth/login', [
     const user = await User.findByEmail(db, email)
     if (!user) {
       return res.status(401).json({ error: 'Invalid credentials' })
-    }
-
-    // Check if email is verified
-    if (!user.isEmailVerified) {
-      return res.status(401).json({ 
-        error: 'Please verify your email before logging in',
-        requiresVerification: true,
-        email: user.email
-      })
     }
 
     // Check password
@@ -341,17 +339,7 @@ app.post('/auth/forgot-password', [
     // Find user
     const user = await User.findByEmail(db, email)
     if (!user) {
-      // Don't reveal if user exists or not for security
-      return res.json({ message: 'If the email exists, a password reset link has been sent.' })
-    }
-
-    // Check if email is verified
-    if (!user.isEmailVerified) {
-      return res.status(400).json({ 
-        error: 'Please verify your email first',
-        requiresVerification: true,
-        email: user.email
-      })
+      return res.status(404).json({ error: 'No account found with that email address.' })
     }
 
     // Generate reset token
@@ -383,10 +371,10 @@ app.post('/auth/forgot-password', [
 
     await transporter.sendMail(mailOptions)
 
-    res.json({ message: 'If the email exists, a password reset link has been sent.' })
+    res.json({ message: 'Password reset email sent successfully.' })
   } catch (error) {
     console.error('Forgot password error:', error)
-    res.status(500).json({ error: 'Internal server error' })
+    res.status(500).json({ error: 'Unable to send password reset email. Please try again later.' })
   }
 })
 

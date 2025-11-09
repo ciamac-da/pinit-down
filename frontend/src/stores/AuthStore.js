@@ -33,7 +33,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    // Register new user (now requires email verification)
+    // Register new user (email verification disabled)
     async register(userData) {
       this.isLoading = true
       try {
@@ -51,10 +51,18 @@ export const useAuthStore = defineStore('auth', {
           throw new Error(data.error || 'Registration failed')
         }
 
-        return { 
-          success: true, 
-          message: data.message,
-          requiresVerification: data.requiresVerification 
+        if (data.token && data.user) {
+          this.token = data.token
+          this.user = data.user
+          this.isAuthenticated = true
+
+          localStorage.setItem('pinit_token', data.token)
+          localStorage.setItem('pinit_user', JSON.stringify(data.user))
+        }
+
+        return {
+          success: true,
+          message: data.message
         }
       } catch (error) {
         console.error('Registration error:', error)
@@ -118,7 +126,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    // Login user (now checks for email verification)
+    // Login user
     async login(credentials) {
       this.isLoading = true
       try {
@@ -133,14 +141,6 @@ export const useAuthStore = defineStore('auth', {
         const data = await response.json()
 
         if (!response.ok) {
-          if (data.requiresVerification) {
-            return { 
-              success: false, 
-              error: data.error, 
-              requiresVerification: true,
-              email: data.email 
-            }
-          }
           throw new Error(data.error || 'Login failed')
         }
 
@@ -176,14 +176,6 @@ export const useAuthStore = defineStore('auth', {
         const data = await response.json()
 
         if (!response.ok) {
-          if (data.requiresVerification) {
-            return { 
-              success: false, 
-              error: data.error, 
-              requiresVerification: true,
-              email: data.email 
-            }
-          }
           throw new Error(data.error || 'Failed to send reset email')
         }
 
