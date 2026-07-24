@@ -25,7 +25,7 @@ router.post('/', authenticateToken, async (req, res) => {
     
     const cartItems = req.app.locals.cartItems
     const result = await cartItems.insertOne(cartItem)
-    res.json(result)
+    res.json({ ...cartItem, _id: result.insertedId })
   } catch (error) {
     console.error('Error adding cart item:', error)
     res.status(500).json({ error: 'Internal server error' })
@@ -42,7 +42,7 @@ router.patch('/:id', authenticateToken, async (req, res) => {
     }
 
     const cartItems = req.app.locals.cartItems
-    const result = await cartItems.updateOne(
+    await cartItems.updateOne(
       { 
         _id: new ObjectId(id),
         userId: req.user._id
@@ -50,11 +50,12 @@ router.patch('/:id', authenticateToken, async (req, res) => {
       { $set: { ...update, updatedAt: new Date() } }
     )
 
-    if (result.matchedCount === 0) {
+    const updatedItem = await cartItems.findOne({ _id: new ObjectId(id), userId: req.user._id })
+    if (!updatedItem) {
       return res.status(404).json({ error: 'Item not found' })
     }
 
-    res.json(result)
+    res.json(updatedItem)
   } catch (error) {
     console.error('Error updating cart item:', error)
     res.status(500).json({ error: 'Internal server error' })
@@ -89,10 +90,28 @@ router.delete('/:id', authenticateToken, async (req, res) => {
 router.delete('/', authenticateToken, async (req, res) => {
   try {
     const cartItems = req.app.locals.cartItems
-    const result = await cartItems.deleteMany({ userId: req.user._id })
+    const result = await cartItems.deleteMany({ userId: req.user._id, isSaved: { $ne: true } })
     res.json(result)
   } catch (error) {
     console.error('Error deleting all cart items:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+router.post('/reorder', authenticateToken, async (req, res) => {
+  try {
+    const { items } = req.body
+    const cartItems = req.app.locals.cartItems
+    const bulkOps = items.map(({ id, order }) => ({
+      updateOne: {
+        filter: { _id: new ObjectId(id), userId: req.user._id },
+        update: { $set: { order } },
+      },
+    }))
+    await cartItems.bulkWrite(bulkOps)
+    res.json({ success: true })
+  } catch (error) {
+    console.error('Error reordering cart items:', error)
     res.status(500).json({ error: 'Internal server error' })
   }
 })

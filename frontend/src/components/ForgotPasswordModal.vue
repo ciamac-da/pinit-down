@@ -124,7 +124,9 @@ export default {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+@use "@/styles/abstracts/color";
+
 .success-state {
   text-align: center;
   padding: 2rem;
@@ -136,7 +138,7 @@ export default {
 }
 
 .success-message {
-  color: #f2f2f2;
+  color: color.$light;
   margin: 1.5rem 0;
   line-height: 1.6;
   font-size: 0.95rem;

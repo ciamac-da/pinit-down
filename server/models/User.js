@@ -107,4 +107,9 @@ export class User {
       }
     )
   }
+
+  static async deleteById(db, userId) {
+    const users = db.collection('users')
+    return await users.deleteOne({ _id: new ObjectId(userId) })
+  }
 }

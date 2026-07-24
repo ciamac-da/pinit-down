@@ -62,6 +62,9 @@ export default {
         Please check your inbox and click the verification link to activate your account.
         The link will expire in 24 hours.
       </p>
+      <p class="verification-message" style="font-size: 0.85rem; opacity: 0.8;">
+        Can't find it? Check your spam or junk folder.
+      </p>
       
       <div v-if="message" class="success-message">
         {{ message }}
@@ -95,7 +98,9 @@ export default {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+@use "@/styles/abstracts/color";
+
 .verification-form {
   text-align: center;
   padding: 2rem;
@@ -107,7 +112,7 @@ export default {
 }
 
 .verification-message {
-  color: #f2f2f2;
+  color: color.$light;
   margin: 1.5rem 0;
   line-height: 1.6;
   font-size: 0.95rem;
@@ -115,20 +120,20 @@ export default {
 
 .resend-button {
   margin: 1.5rem 0;
-  background-color: #ecb732 !important;
+  background-color: color.$gold !important;
 }
 
 .resend-button:hover:not(:disabled) {
-  background-color: #d4a429 !important;
+  background-color: color.$gold-hover !important;
 }
 
 .success-message {
-  background: rgba(46, 125, 50, 0.2);
-  color: #4caf50;
+  background: rgba(color.$success-alt, 0.2);
+  color: color.$success-alt;
   padding: 1rem;
   border-radius: 8px;
   margin: 1rem 0;
-  border: 1px solid #4caf50;
+  border: 1px solid color.$success-alt;
   font-weight: 500;
 }
 </style>
