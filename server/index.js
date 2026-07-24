@@ -408,12 +408,7 @@ app.post('/auth/resend-verification', [
       return res.status(500).json({ error: 'Email service is currently unavailable. Please try again later.' })
     }
  
-    const info = await transporter.sendMail(mailOptions)
- 
-    const previewUrl = nodemailer.getTestMessageUrl?.(info)
-    if (previewUrl) {
-      console.log(`Verification email preview URL: ${previewUrl}`)
-    }
+    await sendEmail(mailOptions)
  
     res.json({
       success: true,
@@ -527,12 +522,7 @@ app.post('/auth/forgot-password', [
       return res.status(500).json({ error: 'Email service is currently unavailable. Please try again later.' })
     }
  
-    const info = await transporter.sendMail(mailOptions)
- 
-    const previewUrl = nodemailer.getTestMessageUrl?.(info)
-    if (previewUrl) {
-      console.log(`Password reset email preview URL: ${previewUrl}`)
-    }
+    await sendEmail(mailOptions)
  
     res.json({ message: 'Password reset email sent successfully.' })
   } catch (error) {
