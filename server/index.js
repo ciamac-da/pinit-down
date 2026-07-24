@@ -18,7 +18,7 @@ function isValidObjectId(id) {
     )
 }
 
-dotenv.config({ path: '.env.local' })
+dotenv.config({ path: process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local' })
 
 const app = express()
 const PORT = process.env.PORT || 3001
