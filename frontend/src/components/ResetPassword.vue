@@ -17,6 +17,8 @@ export default {
     const user = ref(null)
     const password = ref('')
     const confirmPassword = ref('')
+    const showPassword = ref(false)
+    const showConfirmPassword = ref(false)
 
     const verifyToken = async () => {
       const token = route.query.token
@@ -51,8 +53,24 @@ export default {
         return
       }
 
-      if (password.value.length < 6) {
-        error.value = 'Password must be at least 6 characters'
+      if (password.value.length < 8) {
+        error.value = 'Password must be at least 8 characters'
+        return
+      }
+      if (!/[A-Z]/.test(password.value)) {
+        error.value = 'Password must contain at least one uppercase letter'
+        return
+      }
+      if (!/[a-z]/.test(password.value)) {
+        error.value = 'Password must contain at least one lowercase letter'
+        return
+      }
+      if (!/[0-9]/.test(password.value)) {
+        error.value = 'Password must contain at least one number'
+        return
+      }
+      if (!/[^A-Za-z0-9]/.test(password.value)) {
+        error.value = 'Password must contain at least one special character'
         return
       }
 
@@ -100,6 +118,8 @@ export default {
       user,
       password,
       confirmPassword,
+      showPassword,
+      showConfirmPassword,
       handleSubmit,
       goHome
     }
@@ -136,28 +156,46 @@ export default {
         </div>
 
         <form @submit.prevent="handleSubmit" class="reset-form">
-          <div class="form-group">
+          <div class="form-group password-group">
             <input
               v-model="password"
-              type="password"
-              placeholder="New Password (min. 6 characters)"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="New Password (min. 8 characters)"
               required
-              minlength="6"
+              minlength="8"
               :disabled="isResetting"
               autocomplete="new-password"
             />
+            <button
+              type="button"
+              class="toggle-password"
+              @click="showPassword = !showPassword"
+              tabindex="-1"
+            >
+              <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
           </div>
 
-          <div class="form-group">
+          <div class="form-group password-group">
             <input
               v-model="confirmPassword"
-              type="password"
+              :type="showConfirmPassword ? 'text' : 'password'"
               placeholder="Confirm New Password"
               required
-              minlength="6"
+              minlength="8"
               :disabled="isResetting"
               autocomplete="new-password"
             />
+            <button
+              type="button"
+              class="toggle-password"
+              @click="showConfirmPassword = !showConfirmPassword"
+              tabindex="-1"
+            >
+              <svg v-if="showConfirmPassword" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
           </div>
 
           <div v-if="error" class="error-message">
@@ -195,10 +233,12 @@ export default {
   </div>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
+@use "@/styles/abstracts/color";
+
 .reset-password-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #8a2be2 0%, #ecb732 100%);
+  background: color.$gradient;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -206,12 +246,12 @@ export default {
 }
 
 .reset-container {
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(color.$white, 0.95);
   border-radius: 1rem;
   padding: 3rem;
   max-width: 500px;
   width: 100%;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 20px 40px rgba(color.$dark, 0.15);
 }
 
 .loading-state, .success-state, .error-state {
@@ -231,21 +271,21 @@ export default {
 }
 
 .form-header h2 {
-  color: #333;
+  color: color.$dark-medium;
   margin-bottom: 1rem;
   font-size: 1.8rem;
 }
 
 .form-header p {
-  color: #666;
+  color: color.$dark50;
   font-size: 1rem;
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #8a2be2;
+  border: 4px solid color.$light;
+  border-top: 4px solid color.$blue-violet;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -261,29 +301,29 @@ export default {
 }
 
 h2 {
-  color: #333;
+  color: color.$dark-medium;
   margin: 1rem 0;
   font-size: 1.8rem;
 }
 
 p {
-  color: #666;
+  color: color.$dark50;
   line-height: 1.6;
   margin: 0.5rem 0;
 }
 
 .success-message {
-  color: #2e7d32;
+  color: color.$success;
   font-weight: 600;
 }
 
 .error-message {
-  color: #d32f2f;
+  color: color.$danger-text;
   font-weight: 600;
-  background: rgba(211, 47, 47, 0.1);
+  background: rgba(color.$danger-text, 0.1);
   padding: 1rem;
   border-radius: 0.5rem;
-  border: 1px solid rgba(211, 47, 47, 0.3);
+  border: 1px solid rgba(color.$danger-text, 0.3);
   margin: 1rem 0;
 }
 
@@ -297,10 +337,39 @@ p {
   text-align: left;
 }
 
+.form-group.password-group {
+  position: relative;
+}
+
+.form-group.password-group input {
+  padding-right: 2.5rem;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 0.6rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: color.$dark50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: color 0.2s ease;
+}
+
+.toggle-password:hover {
+  color: color.$dark-medium;
+}
+
 .form-group input {
   width: 100%;
   padding: 1rem;
-  border: 2px solid #e0e0e0;
+  border: 2px solid color.$border-medium;
   border-radius: 0.5rem;
   font-size: 1rem;
   transition: all 0.3s ease;
@@ -309,8 +378,8 @@ p {
 
 .form-group input:focus {
   outline: none;
-  border-color: #8a2be2;
-  box-shadow: 0 0 0 3px rgba(138, 43, 226, 0.1);
+  border-color: color.$blue-violet;
+  box-shadow: 0 0 0 3px rgba(color.$blue-violet, 0.1);
 }
 
 .form-group input:disabled {
@@ -319,8 +388,8 @@ p {
 }
 
 .reset-button {
-  background: linear-gradient(135deg, #8a2be2 0%, #ecb732 100%);
-  color: white;
+  background: color.$gradient;
+  color: color.$white;
   border: none;
   padding: 1rem 2rem;
   border-radius: 0.5rem;
@@ -333,7 +402,7 @@ p {
 
 .reset-button:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(138, 43, 226, 0.3);
+  box-shadow: 0 8px 25px rgba(color.$blue-violet, 0.3);
 }
 
 .reset-button:disabled {
@@ -343,8 +412,8 @@ p {
 }
 
 .home-button {
-  background: linear-gradient(135deg, #8a2be2 0%, #ecb732 100%);
-  color: white;
+  background: color.$gradient;
+  color: color.$white;
   border: none;
   padding: 1rem 2rem;
   border-radius: 0.5rem;
@@ -357,25 +426,25 @@ p {
 
 .home-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(138, 43, 226, 0.3);
+  box-shadow: 0 8px 25px rgba(color.$blue-violet, 0.3);
 }
 
 .form-footer {
   margin-top: 2rem;
   padding-top: 1.5rem;
-  border-top: 1px solid #e0e0e0;
+  border-top: 1px solid color.$border-medium;
 }
 
 .link-button {
   background: none;
   border: none;
-  color: #8a2be2;
+  color: color.$blue-violet;
   cursor: pointer;
   text-decoration: underline;
   font-size: 1rem;
 }
 
 .link-button:hover {
-  color: #6a1b9a;
+  color: color.$blue-violet-deeper;
 }
 </style>

@@ -4,7 +4,7 @@
 @use "@/styles/abstracts/size";
 
 .cart-items {
-  padding: spacing.$spacing-xxs spacing.$spacing-s;
+  padding: spacing.$spacing-base spacing.$spacing-s;
   background: color.$light;
   margin-top: spacing.$spacing-s;
   border-radius: size.$sp12;
@@ -18,17 +18,21 @@
   }
 
   .cart-item {
-    display: grid;
-    grid-template-columns: 11fr 2fr;
-h3,
-.icon {
-  display: inline-block;
+    display: flex;
+    align-items: center;
+    gap: spacing.$spacing-xxs;
+
+h3 {
+  flex: 1;
   word-break: break-word;
+  margin: 0;
 }
 
 .icon {
-  align-content: center;
-  text-align: right;
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-xxs;
+  flex-shrink: 0;
 }
 
 i {
@@ -41,10 +45,6 @@ i {
 
 i:hover {
   scale: 1.04;
-}
-
-.fav {
-  color: color.$danger;
 }
 
 i.active,

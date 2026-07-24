@@ -4,7 +4,11 @@
 @use "@/styles/abstracts/size";
 
 header {
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
   text-align: center;
   background: color.$blue-violet;
   display: flex;
@@ -12,7 +16,7 @@ header {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  width: -webkit-fill-available;
+  width: 100%;
 
   .header-content {
     display: flex;
@@ -105,6 +109,85 @@ h1 {
         }
     }
 
+  }
+
+  .dashboard-btn {
+    display: flex;
+    align-items: center;
+    gap: spacing.$spacing-base;
+    background: rgba(color.$light, 0.15);
+    color: color.$light;
+    border: 1px solid rgba(color.$light, 0.35);
+    border-radius: size.$sp20;
+    padding: spacing.$spacing-base spacing.$spacing-xxs;
+    font-size: size.$sp12;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+
+    .material-icons { font-size: size.$sp20; }
+
+    &:hover { background: rgba(color.$light, 0.28); }
+  }
+
+  .delete-account-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: rgba(color.$light, 0.6);
+    display: flex;
+    align-items: center;
+    padding: spacing.$spacing-base;
+    transition: color 0.2s;
+
+    &:hover { color: color.$danger; }
+
+    .material-icons { font-size: size.$sp20; }
+  }
+
+  .confirm-delete {
+    display: flex;
+    align-items: center;
+    gap: spacing.$spacing-base;
+    background: rgba(color.$danger, 0.15);
+    border: 1px solid rgba(color.$danger, 0.4);
+    border-radius: spacing.$spacing-xxs;
+    padding: spacing.$spacing-base spacing.$spacing-xxs;
+
+    .confirm-text {
+      font-size: size.$sp12;
+      color: color.$light;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .confirm-yes {
+      background: color.$danger;
+      color: color.$light;
+      border: none;
+      border-radius: spacing.$spacing-base;
+      padding: spacing.$spacing-base spacing.$spacing-xxs;
+      font-size: size.$sp12;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+
+      &:hover { background: color.$danger-deep; }
+    }
+
+    .confirm-no {
+      background: transparent;
+      color: color.$light;
+      border: 1px solid rgba(color.$light, 0.5);
+      border-radius: spacing.$spacing-base;
+      padding: spacing.$spacing-base spacing.$spacing-xxs;
+      font-size: size.$sp12;
+      cursor: pointer;
+      white-space: nowrap;
+
+      &:hover { background: rgba(color.$light, 0.1); }
+    }
   }
 
   .logout-btn {

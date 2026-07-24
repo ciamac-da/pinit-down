@@ -21,7 +21,7 @@ function isValidObjectId(id) {
 dotenv.config({ path: '.env.local' })
 
 const app = express()
-const PORT = 3000
+const PORT = process.env.PORT || 3001
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret'
 const EMAIL_FROM = process.env.EMAIL_FROM || 'noreply@pinitdown.com'
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173'
@@ -30,6 +30,8 @@ app.use(cors({
   origin: [
     'http://localhost:5173',
     'http://localhost:3000',
+    'http://localhost:8081',
+    'http://localhost:19006',
     'https://pinit-down.vercel.app',
     process.env.CORS_ORIGIN || '*'
   ],
@@ -148,6 +150,24 @@ const generateToken = (userId) => {
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn: '7d' })
 }
 
+// Strong password validation
+const isStrongPassword = (password) => {
+  if (password.length < 8) return 'Password must be at least 8 characters.'
+  if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter.'
+  if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter.'
+  if (!/[0-9]/.test(password)) return 'Password must contain at least one number.'
+  if (!/[^A-Za-z0-9]/.test(password)) return 'Password must contain at least one special character.'
+  return null
+}
+
+const validateStrongPassword = (field = 'password') => {
+  return body(field).custom((value) => {
+    const error = isStrongPassword(value)
+    if (error) throw new Error(error)
+    return true
+  })
+}
+
 // Middleware to authenticate JWT token
 const authenticateToken = async (req, res, next) => {
   const authHeader = req.headers['authorization']
@@ -192,10 +212,10 @@ app.get('/', (req, res) => {
   res.json({ message: 'Pinit Down API is running!' })
 })
 
-// POST /auth/register - User Registration without Email Verification
+// POST /auth/register - User Registration with Email Verification
 app.post('/auth/register', [
   body('email').isEmail().normalizeEmail(),
-  body('password').isLength({ min: 6 }),
+  validateStrongPassword('password'),
   body('name').trim().isLength({ min: 2 })
 ], async (req, res) => {
   try {
@@ -216,30 +236,51 @@ app.post('/auth/register', [
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Create new user (email verification disabled)
+    // Generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex')
+    const verificationExpires = new Date(Date.now() + 24 * 3600000) // 24 hours
+
     const newUser = new User({
       email,
       password: hashedPassword,
       name,
-      isEmailVerified: true,
-      emailVerificationToken: null,
-      emailVerificationExpires: null
+      isEmailVerified: false,
+      emailVerificationToken: verificationToken,
+      emailVerificationExpires: verificationExpires
     })
 
-    const result = await newUser.save(db)
-    const userId = result.insertedId
+    await newUser.save(db)
 
-    // Generate token for immediate authentication
-    const token = generateToken(userId)
+    // Send verification email
+    const verificationUrl = `${FRONTEND_URL}/verify-email?token=${verificationToken}`
+
+    const mailOptions = {
+      from: EMAIL_FROM,
+      to: email,
+      subject: 'Verify your email - Pinit Down',
+      html: `
+        <h2>Welcome to Pinit Down, ${name}!</h2>
+        <p>Please click the link below to verify your email address:</p>
+        <a href="${verificationUrl}" style="display: inline-block; padding: 10px 20px; background-color: #8a2be2; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
+        <p>Or copy and paste this link into your browser:</p>
+        <p>${verificationUrl}</p>
+        <p>This link will expire in 24 hours.</p>
+        <p>Best regards,<br>Pinit Down Team</p>
+      `
+    }
+
+    const transporter = await getTransporter()
+    if (transporter) {
+      const info = await transporter.sendMail(mailOptions)
+      const previewUrl = nodemailer.getTestMessageUrl?.(info)
+      if (previewUrl) console.log(`Verification email preview URL: ${previewUrl}`)
+    } else {
+      console.error('Email transporter unavailable — verification email not sent for:', email)
+    }
 
     res.status(201).json({
-      message: 'Registration successful',
-      token,
-      user: {
-        id: userId,
-        email,
-        name
-      }
+      message: 'Registration successful! Please check your email to verify your account.',
+      requiresVerification: true
     })
   } catch (error) {
     console.error('Registration error:', error)
@@ -367,6 +408,11 @@ app.post('/auth/login', [
       return res.status(401).json({ error: 'Invalid credentials' })
     }
 
+    // Block unverified accounts
+    if (!user.isEmailVerified) {
+      return res.status(403).json({ error: 'Please verify your email before logging in.' })
+    }
+
     // Generate JWT token
     const token = generateToken(user._id)
 
@@ -481,7 +527,7 @@ app.post('/auth/verify-reset-token', [
 // POST /auth/reset-password - Reset password
 app.post('/auth/reset-password', [
   body('token').exists(),
-  body('password').isLength({ min: 6 })
+  validateStrongPassword('password')
 ], async (req, res) => {
   try {
     const errors = validationResult(req)
@@ -515,10 +561,38 @@ app.post('/auth/reset-password', [
 })
 
 // Cart routes with authentication (user-specific)
+
+// POST /cart-items/reorder - Bulk update item order
+app.post('/cart-items/reorder', authenticateToken, async (req, res) => {
+  try {
+    const { items } = req.body
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'items array is required' })
+    }
+    const validItems = items.filter(({ id }) => isValidObjectId(id))
+    if (validItems.length === 0) {
+      return res.status(400).json({ error: 'No valid item IDs provided' })
+    }
+    const bulk = validItems.map(({ id, order }) => ({
+      updateOne: {
+        filter: { _id: new ObjectId(id), userId: req.user._id },
+        update: { $set: { order, updatedAt: new Date() } }
+      }
+    }))
+    await cartItems.bulkWrite(bulk)
+    res.json({ success: true })
+  } catch (error) {
+    console.error('Error reordering cart items:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
 app.get('/cart-items', authenticateToken, async (req, res) => {
   try {
-    // Only get cart items for the authenticated user
-    const userCartItems = await cartItems.find({ userId: req.user._id }).toArray()
+    const userCartItems = await cartItems
+      .find({ userId: req.user._id })
+      .sort({ order: 1, createdAt: 1 })
+      .toArray()
     res.json(userCartItems)
   } catch (error) {
     console.error('Error fetching cart items:', error)
@@ -566,7 +640,8 @@ app.patch('/cart-items/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Item not found or unauthorized' })
     }
     
-    res.json(result)
+    const updatedItem = await cartItems.findOne({ _id: new ObjectId(id), userId: req.user._id })
+    res.json(updatedItem)
   } catch (error) {
     console.error('Error updating cart item:', error)
     res.status(500).json({ error: 'Internal server error' })
@@ -604,5 +679,72 @@ app.delete('/cart-items', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Failed to delete all cart items:', error)
     res.status(500).json({ error: 'Internal Server Error' })
+  }
+})
+
+// PATCH /auth/change-password - Change password for authenticated user
+app.patch('/auth/change-password', [
+  body('currentPassword').exists(),
+  validateStrongPassword('newPassword')
+], authenticateToken, async (req, res) => {
+  try {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array()[0].msg })
+    }
+    const { currentPassword, newPassword } = req.body
+    const db = client.db(dbName)
+    const user = await User.findById(db, req.user._id)
+    const isValid = await bcrypt.compare(currentPassword, user.password)
+    if (!isValid) {
+      return res.status(400).json({ error: 'Current password is incorrect.' })
+    }
+    const hashed = await bcrypt.hash(newPassword, 12)
+    await User.updatePassword(db, req.user._id, hashed)
+    res.json({ success: true, message: 'Password changed successfully.' })
+  } catch (error) {
+    console.error('Change password error:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// DELETE /auth/account - Delete user account and all their data
+app.delete('/auth/account', authenticateToken, async (req, res) => {
+  try {
+    const db = client.db(dbName)
+    // Delete all cart items belonging to the user
+    await cartItems.deleteMany({ userId: req.user._id })
+    // Delete the user document
+    await User.deleteById(db, req.user._id)
+    res.json({ success: true, message: 'Account deleted successfully.' })
+  } catch (error) {
+    console.error('Delete account error:', error)
+    res.status(500).json({ error: 'Internal server error' })
+  }
+})
+
+// PATCH /auth/update-name - Update user display name
+app.patch('/auth/update-name', [
+  body('name').trim().isLength({ min: 2 }).withMessage('Name must be at least 2 characters.')
+], authenticateToken, async (req, res) => {
+  try {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ error: errors.array()[0].msg })
+    }
+
+    const { name } = req.body
+    const db = client.db(dbName)
+    const { ObjectId } = await import('mongodb')
+
+    await db.collection('users').updateOne(
+      { _id: new ObjectId(req.user._id) },
+      { $set: { name, updatedAt: new Date() } }
+    )
+
+    res.json({ success: true, name })
+  } catch (error) {
+    console.error('Update name error:', error)
+    res.status(500).json({ error: 'Internal server error' })
   }
 })

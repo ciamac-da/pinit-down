@@ -33,7 +33,7 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    // Register new user (email verification disabled)
+    // Register new user
     async register(userData) {
       this.isLoading = true
       try {
@@ -51,17 +51,9 @@ export const useAuthStore = defineStore('auth', {
           throw new Error(data.error || 'Registration failed')
         }
 
-        if (data.token && data.user) {
-          this.token = data.token
-          this.user = data.user
-          this.isAuthenticated = true
-
-          localStorage.setItem('pinit_token', data.token)
-          localStorage.setItem('pinit_user', JSON.stringify(data.user))
-        }
-
         return {
           success: true,
+          requiresVerification: data.requiresVerification || false,
           message: data.message
         }
       } catch (error) {
@@ -232,6 +224,62 @@ export const useAuthStore = defineStore('auth', {
         return { success: true }
       } catch (error) {
         console.error('Reset password error:', error)
+        return { success: false, error: error.message }
+      }
+    },
+
+    async changePassword(currentPassword, newPassword) {
+      this.isLoading = true
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/change-password`, {
+          method: 'PATCH',
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify({ currentPassword, newPassword })
+        })
+        const data = await response.json()
+        if (!response.ok) throw new Error(data.error || 'Failed to change password')
+        return { success: true, message: data.message }
+      } catch (error) {
+        return { success: false, error: error.message }
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    async deleteAccount() {
+      this.isLoading = true
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/account`, {
+          method: 'DELETE',
+          headers: this.getAuthHeaders()
+        })
+        const data = await response.json()
+        if (!response.ok) throw new Error(data.error || 'Failed to delete account')
+        this.logout()
+        return { success: true }
+      } catch (error) {
+        console.error('Delete account error:', error)
+        return { success: false, error: error.message }
+      } finally {
+        this.isLoading = false
+      }
+    },
+
+    async updateName(newName) {
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/update-name`, {
+          method: 'PATCH',
+          headers: this.getAuthHeaders(),
+          body: JSON.stringify({ name: newName })
+        })
+        const data = await response.json()
+        if (response.ok) {
+          this.user.name = data.name
+          localStorage.setItem('pinit_user', JSON.stringify(this.user))
+          return { success: true }
+        }
+        return { success: false, error: data.error || 'Failed to update name' }
+      } catch (error) {
         return { success: false, error: error.message }
       }
     },

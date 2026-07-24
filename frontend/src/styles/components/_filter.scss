@@ -7,14 +7,44 @@
   display: flex;
   flex-direction: column;
   gap: spacing.$spacing-xs;
-  justify-content: flex-end;
+  justify-content: space-between;
   margin: auto;
   text-align: center;
   padding-top: spacing.$spacing-xl;
 
   @include breakpoint.media-breakpoint-up(sm) {
     flex-direction: row;
+    align-items: center;
     }
+}
+
+.filter-left {
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-xs;
+
+  @include breakpoint.media-breakpoint-up(sm) {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.filter-right {
+  display: flex;
+  justify-content: center;
+
+  button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  @include breakpoint.media-breakpoint-up(sm) {
+    justify-content: flex-end;
+
+    button {
+      width: auto;
+    }
+  }
 }
 
 .filter button {
@@ -49,8 +79,4 @@
   @include breakpoint.media-breakpoint-up(sm) {
     transform: rotate(-7deg);
     }
-}
-.filter button.delete-all {
-  background: color.$danger;
-  color: color.$light;
 }
