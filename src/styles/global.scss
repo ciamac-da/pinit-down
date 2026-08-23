@@ -23,11 +23,14 @@ body {
   height: 100vh;
   min-height: min-content;
   max-width: 100%;
-  overscroll-behavior: none;
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+
+  @include breakpoint.media-breakpoint-up(sm) {
+    overscroll-behavior: none;
+  }
 }
 
 img {
