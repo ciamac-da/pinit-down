@@ -350,7 +350,7 @@ export default {
   justify-content: center;
   gap: spacing.$spacing-base;
   border: none;
-  width: stretch;
+  width: 100%;
   border-radius: size.$sp10;
   background: rgba(color.$danger, 0.12);
   color: color.$danger-dark;
@@ -468,7 +468,7 @@ export default {
     display: flex;
     align-items: center;
     justify-content: space-around;
-    width: stretch;
+    width: 100%;
     gap: spacing.$spacing-xxs;
   }
 

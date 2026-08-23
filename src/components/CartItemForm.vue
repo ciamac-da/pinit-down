@@ -435,7 +435,7 @@ export default {
   border-radius: size.$sp08;
   padding: spacing.$spacing-xxs spacing.$spacing-m;
   cursor: pointer;
-  width: stretch;
+  width: 100%;
   @include typography.headline-140-medium;
   transition: 0.2s linear all;
 
