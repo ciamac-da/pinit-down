@@ -1833,6 +1833,7 @@ main {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  max-width: inherit;
 }
 
 .user-welcome {
