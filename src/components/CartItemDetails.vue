@@ -255,14 +255,14 @@ export default {
       <p v-if="editError" class="edit-error">{{ editError }}</p>
     </div>
     <div v-else class="cart-item" :class="{ purchased: cartItem.isPurchased }">
-      <h3 :class="{ strikethrough: cartItem.isPurchased }">
+      <h4 :class="{ strikethrough: cartItem.isPurchased }">
         {{ cartItem.title }}
 
         <span class="item-measure"
           >{{ itemDisplayAmount(cartItem) }}
           {{ itemDisplayUnit(cartItem) }}</span
         >
-      </h3>
+      </h4>
       <div class="icon">
         <i
           v-if="!isSavedView"
@@ -337,7 +337,7 @@ export default {
     gap: spacing.$spacing-base;
     color: color.$dark;
 
-    h3 {
+    h4 {
       flex: 1;
       word-break: break-word;
       margin: 0;
@@ -452,7 +452,7 @@ export default {
 .item-measure {
   margin-left: spacing.$spacing-base;
   color: color.$muted;
-  @include typography.headline-140;
+  @include typography.headline-120;
 }
 
 .edit-error {
@@ -500,7 +500,7 @@ html.dark .cart-items .cart-item {
   box-shadow: size.$sp02 size.$sp04 size.$sp24 color.$light;
 }
 
-html.dark .cart-items h3 {
+html.dark .cart-items h4 {
   color: color.$dark;
 }
 </style>
