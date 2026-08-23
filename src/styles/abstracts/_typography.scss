@@ -1,0 +1,233 @@
+@use './breakpoint';
+@use './spacing';
+@use './size';
+
+@mixin headline-100 {
+    font-size: size.$sp10;
+    line-height: 1.2;
+    letter-spacing: 0;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp12;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-120-medium {
+    font-size: size.$sp10;
+    line-height: 1.2;
+    letter-spacing: 0;
+    font-weight: 500;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp12;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-120 {
+    font-size: size.$sp12;
+    line-height: 1.2;
+    letter-spacing: 0;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp14;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-120-medium {
+    font-size: size.$sp12;
+    line-height: 1.2;
+    letter-spacing: 0;
+    font-weight: 500;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp14;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-140 {
+    font-size: size.$sp14;
+    line-height: 1.2;
+    letter-spacing: 0;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp18;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-140-medium {
+    font-size: size.$sp14;
+    line-height: 1.2;
+    letter-spacing: 0;
+    font-weight: 500;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp18;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-160 {
+    font-size: size.$sp16;
+    line-height: 1.2;
+    letter-spacing: 0;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp20;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-160-medium {
+    font-size: size.$sp16;
+    line-height: 1.2;
+    letter-spacing: 0;
+    font-weight: 500;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp20;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-180 {
+    font-size: size.$sp18;
+    line-height: 1.2;
+    letter-spacing: 0;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp22;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-180-medium {
+    font-size: size.$sp18;
+    line-height: 1.2;
+    letter-spacing: 0;
+    font-weight: 500;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp22;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-200 {
+    font-size: size.$sp20;
+    line-height: 1.2;
+    letter-spacing: 0;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp24;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-200-medium {
+    font-size: size.$sp20;
+    line-height: 1.2;
+    letter-spacing: 0;
+    font-weight: 500;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp24;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-240 {
+    font-size: size.$sp24;
+    line-height: 1.2;
+    letter-spacing: 0;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp28;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-240-medium {
+    font-size: size.$sp24;
+    line-height: 1.2;
+    letter-spacing: 0;
+    font-weight: 500;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp28;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-280 {
+    font-size: size.$sp28;
+    line-height: 1.2;
+    letter-spacing: 0;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp32;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-280-medium {
+    font-size: size.$sp28;
+    line-height: 1.2;
+    letter-spacing: 0;
+    font-weight: 500;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp32;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-360 {
+    font-size: size.$sp36;
+    line-height: 1.2;
+    letter-spacing: 0;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp40;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-360-medium {
+    font-size: size.$sp36;
+    line-height: 1.2;
+    letter-spacing: 0;
+    font-weight: 500;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp40;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-400 {
+    font-size: size.$sp40;
+    line-height: 1.2;
+    letter-spacing: 0;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp44;
+        line-height: 1.4;
+    }
+}
+
+@mixin headline-400-medium {
+    font-size: size.$sp40;
+    line-height: 1.2;
+    letter-spacing: 0;
+    font-weight: 500;
+
+    @include breakpoint.media-breakpoint-up(xxl) {
+        font-size: size.$sp44;
+        line-height: 1.4;
+    }
+}

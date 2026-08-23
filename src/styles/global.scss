@@ -1,0 +1,63 @@
+@use "@/styles/abstracts/size";
+@use "@/styles/abstracts/color";
+@use "@/styles/abstracts/spacing";
+@use "@/styles/abstracts/breakpoint";
+@use "@/styles/abstracts/typography";
+
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&family=VT323&display=swap");
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  box-sizing: border-box;
+  background: color.$light;
+  color: color.$dark;
+  font-family: "Poppins", sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  min-height: min-content;
+  max-width: 100%;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+img {
+  pointer-events: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.dark {
+  body {
+    background: color.$dark;
+    color: color.$light;
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    background: color.$light !important;
+    color: color.$dark !important;
+  }
+
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    color-adjust: exact !important;
+  }
+}
