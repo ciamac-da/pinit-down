@@ -1,5 +1,6 @@
 <script>
 import { extractCoreNutrients } from '@/services/foodFactsApi';
+import { useCartStore } from '@/stores/CartStore';
 
 export default {
   props: {
@@ -25,6 +26,8 @@ export default {
       searching: false,
       searchError: '',
       selectedFood: null,
+      showPageSizeMenu: false,
+      toolbarHeight: 0,
     };
   },
   computed: {
@@ -58,19 +61,6 @@ export default {
     },
     totalPages() {
       return Math.max(1, Math.ceil(this.searchResults.length / this.pageSize));
-    },
-    visiblePageNumbers() {
-      const windowSize = 7;
-      if (this.totalPages <= windowSize) {
-        return Array.from({ length: this.totalPages }, (_, i) => i + 1);
-      }
-
-      const halfWindow = Math.floor(windowSize / 2);
-      let start = Math.max(1, this.currentPage - halfWindow);
-      let end = Math.min(this.totalPages, start + windowSize - 1);
-      start = Math.max(1, end - windowSize + 1);
-
-      return Array.from({ length: end - start + 1 }, (_, i) => start + i);
     },
     isAtFirstPage() {
       return this.currentPage <= 1;
@@ -214,10 +204,10 @@ export default {
     nextPage() {
       this.goToPage(this.currentPage + 1);
     },
-    onPageSizeChange(event) {
-      const selected = Number(event.target.value);
-      this.pageSize = Number.isFinite(selected) && selected > 0 ? selected : 20;
+    selectPageSize(size) {
+      this.pageSize = size;
       this.currentPage = 1;
+      this.showPageSizeMenu = false;
     },
     foodKey(food) {
       return `${food.fdcId ?? 'no-id'}:${food.description}`;
@@ -226,7 +216,10 @@ export default {
       return this.savedFoodFactKeys.includes(this.foodKey(food));
     },
     saveFoodFact(food) {
-      if (this.isFoodSaved(food)) return;
+      if (this.isFoodSaved(food)) {
+        useCartStore().showToast('This item is already saved.', 'info');
+        return;
+      }
       this.$emit('save-food-fact', food);
     },
     showDetails(food) {
@@ -238,23 +231,32 @@ export default {
     onCardClick(food) {
       this.showDetails(food);
     },
+    updateToolbarHeight() {
+      this.toolbarHeight = this.$refs.toolbar?.offsetHeight ?? 0;
+    },
   },
   async mounted() {
     await this.loadDataset();
     this.runSearch();
+    this.updateToolbarHeight();
+    this.toolbarResizeObserver = new ResizeObserver(() => this.updateToolbarHeight());
+    this.toolbarResizeObserver.observe(this.$refs.toolbar);
+  },
+  beforeUnmount() {
+    this.toolbarResizeObserver?.disconnect();
   },
 };
 </script>
 
 <template>
-  <div class="food-facts-view">
-    <div class="food-facts-toolbar">
+  <div class="food-facts-view" :style="{ '--food-toolbar-height': toolbarHeight + 'px' }">
+    <div class="food-facts-toolbar" ref="toolbar">
       <h2>Food Facts</h2>
       <form class="food-search-form" @submit.prevent="runSearch">
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Search foods like salmon, yogurt, brown rice"
+          placeholder="Search food facts..."
         />
         <button type="submit">Search</button>
       </form>
@@ -284,6 +286,55 @@ export default {
           {{ letter }}
         </button>
       </div>
+    </div>
+
+    <div v-if="searchResults.length > 0" class="food-pagination food-pagination-top">
+      <span class="page-size-control">Per page</span>
+      <div class="page-size-menu-wrapper">
+        <button
+          type="button"
+          class="page-size-btn"
+          @click="showPageSizeMenu = !showPageSizeMenu"
+        >
+          {{ pageSize }}
+          <i class="material-icons">arrow_drop_down</i>
+        </button>
+        <div
+          v-if="showPageSizeMenu"
+          class="page-size-backdrop"
+          @click="showPageSizeMenu = false"
+        ></div>
+        <div v-if="showPageSizeMenu" class="page-size-dropdown">
+          <button
+            v-for="sizeOption in pageSizeOptions"
+            :key="sizeOption"
+            type="button"
+            class="page-size-option"
+            :class="{ active: pageSize === sizeOption }"
+            @click="selectPageSize(sizeOption)"
+          >
+            {{ sizeOption }}
+          </button>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        class="page-btn"
+        :disabled="isAtFirstPage"
+        @click="previousPage"
+      >
+        <i class="material-icons">chevron_left</i>
+      </button>
+      <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
+      <button
+        type="button"
+        class="page-btn"
+        :disabled="isAtLastPage"
+        @click="nextPage"
+      >
+        <i class="material-icons">chevron_right</i>
+      </button>
     </div>
 
     <p v-if="searching" class="food-state">Searching...</p>
@@ -319,67 +370,26 @@ export default {
         @keyup.enter="onCardClick(food)"
         @keyup.space.prevent="onCardClick(food)"
       >
-        <h3>{{ food.description }}</h3>
+        <h3>
+          {{ food.description }}
+        </h3>
         <div class="food-card-actions">
-          <button type="button" @click.stop="showDetails(food)">
-            See details
-          </button>
-          <button
-            type="button"
-            class="save-food-btn"
-            :class="{ saved: isFoodSaved(food) }"
-            :disabled="isFoodSaved(food)"
-            @click.stop="saveFoodFact(food)"
+         <i
+            class="material-icons food-details-icon"
+            title="See details"
+            @click.stop="showDetails(food)"
+            >visibility</i
           >
-            {{ isFoodSaved(food) ? 'Saved' : 'Save' }}
-          </button>
+         <i
+            class="material-icons food-save-icon"
+            :class="{ saved: isFoodSaved(food) }"
+            :title="isFoodSaved(food) ? 'Already saved' : 'Save'"
+            @click.stop="saveFoodFact(food)"
+            >bookmark_add</i
+          >
         </div>
+
       </article>
-    </div>
-
-    <div v-if="searchResults.length > 0" class="food-pagination">
-      <label class="page-size-control" for="food-page-size"> Per page </label>
-      <select
-        id="food-page-size"
-        class="page-size-select"
-        :value="pageSize"
-        @change="onPageSizeChange"
-      >
-        <option
-          v-for="sizeOption in pageSizeOptions"
-          :key="sizeOption"
-          :value="sizeOption"
-        >
-          {{ sizeOption }}
-        </option>
-      </select>
-
-      <button
-        type="button"
-        class="pagination-btn"
-        :disabled="isAtFirstPage"
-        @click="previousPage"
-      >
-        Prev
-      </button>
-      <button
-        v-for="pageNumber in visiblePageNumbers"
-        :key="pageNumber"
-        type="button"
-        class="pagination-btn"
-        :class="{ active: currentPage === pageNumber }"
-        @click="goToPage(pageNumber)"
-      >
-        {{ pageNumber }}
-      </button>
-      <button
-        type="button"
-        class="pagination-btn"
-        :disabled="isAtLastPage"
-        @click="nextPage"
-      >
-        Next
-      </button>
     </div>
 
     <div
@@ -391,16 +401,19 @@ export default {
         <div class="food-details-header">
           <h3>{{ selectedFood.description }}</h3>
           <div class="food-detail-actions">
-            <button
-              type="button"
-              class="save-food-btn"
+            <i
+              class="material-icons food-save-icon"
               :class="{ saved: isFoodSaved(selectedFood) }"
-              :disabled="isFoodSaved(selectedFood)"
+              :title="isFoodSaved(selectedFood) ? 'Already saved' : 'Save'"
               @click="saveFoodFact(selectedFood)"
+              >bookmark_add</i
             >
-              {{ isFoodSaved(selectedFood) ? 'Saved' : 'Save' }}
-            </button>
-            <button type="button" @click="clearDetails">Close</button>
+            <i
+              class="material-icons food-close-icon"
+              title="Close"
+              @click="clearDetails"
+              >close</i
+            >
           </div>
         </div>
 
@@ -445,10 +458,11 @@ export default {
 }
 
 .food-facts-toolbar {
+  padding-top: spacing.$spacing-xxs;
   position: sticky;
-  top: 0;
+  top: -10px;
   z-index: 6;
-  background: color.$white;
+  background: color.$light-bg;
 
   h2 {
     @include typography.headline-180;
@@ -495,6 +509,7 @@ html.dark .food-facts-toolbar {
   @include typography.headline-120;
   color: color.$muted;
   margin-bottom: spacing.$spacing-xs;
+  justify-self: flex-end;
 }
 
 .food-state-error {
@@ -505,24 +520,21 @@ html.dark .food-facts-toolbar {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: spacing.$spacing-xs;
+  // Clears the fixed app footer so the last row of cards isn't hidden behind it.
+  margin-bottom: spacing.$spacing-3-xl;
 }
 
 .food-letter-filter {
   display: flex;
   gap: spacing.$spacing-base;
   overflow-x: auto;
-  padding: spacing.$spacing-base;
-  margin-bottom: spacing.$spacing-xxs;
-}
-
-.letter-chip,
-.pagination-btn {
-  border: none;
-  cursor: pointer;
-  @include typography.headline-120-medium;
+  padding: spacing.$spacing-xs;
 }
 
 .letter-chip {
+  border: none;
+  cursor: pointer;
+  @include typography.headline-120-medium;
   flex: 0 0 auto;
   min-width: size.$sp40;
   border-radius: size.$sp10;
@@ -538,10 +550,38 @@ html.dark .food-facts-toolbar {
 
 .food-pagination {
   margin-top: spacing.$spacing-xs;
+  margin-bottom: spacing.$spacing-xs;
   display: flex;
   flex-wrap: wrap;
   gap: spacing.$spacing-base;
   align-items: center;
+
+  .page-btn {
+    cursor: pointer;
+    display: flex;
+    color: color.$blue-violet;
+    transition: background 0.15s;
+
+    i {
+      @include typography.headline-200-medium;
+    }
+  }
+}
+
+.food-pagination-top {
+  position: sticky;
+  // Toolbar sticks at top: -10px, so match that offset to avoid a gap below it.
+  top: calc(var(--food-toolbar-height, 0px) - 10px);
+  z-index: 5;
+  justify-content: flex-end;
+  margin-top: 0;
+  padding-bottom: spacing.$spacing-xxs;
+  background: color.$light-bg;
+  border-radius: size.$sp08;
+}
+
+html.dark .food-pagination-top {
+  background: color.$dark;
 }
 
 .page-size-control {
@@ -549,42 +589,106 @@ html.dark .food-facts-toolbar {
   color: color.$muted;
 }
 
-.page-size-select {
+.page-size-menu-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.page-size-btn {
+  display: flex;
+  align-items: center;
   border: size.$sp01 solid rgba(color.$blue-violet, 0.25);
   border-radius: size.$sp08;
   min-height: size.$sp32;
   padding: spacing.$spacing-base spacing.$spacing-xxs;
   background: color.$white;
   color: color.$dark;
+  cursor: pointer;
   @include typography.headline-120;
+
+  .material-icons {
+    @include typography.headline-160;
+    color: color.$muted;
+  }
 }
 
-.pagination-btn {
-  min-height: size.$sp32;
-  min-width: size.$sp32;
+.page-size-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+
+.page-size-dropdown {
+  position: absolute;
+  bottom: calc(100% + #{spacing.$spacing-xxs});
+  left: 0;
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  min-width: size.$sp64;
+  background: color.$white;
   border-radius: size.$sp08;
-  padding: spacing.$spacing-base spacing.$spacing-xxs;
-  background: rgba(color.$blue-violet, 0.12);
-  color: color.$blue-violet-dark;
+  box-shadow: size.$sp02 size.$sp04 size.$sp24 color.$dark;
+  overflow: hidden;
+}
+
+.page-size-option {
+  border: none;
+  background: none;
+  padding: spacing.$spacing-xxs spacing.$spacing-base;
+  color: color.$dark;
+  cursor: pointer;
+  text-align: left;
+  @include typography.headline-120-medium;
+
+  &:hover {
+    background: color.$light-bg-soft;
+  }
 
   &.active {
     background: color.$blue-violet;
     color: color.$white;
+  }
+}
+
+.page-btn {
+  background: none;
+  border: none;
+  border-radius: size.$sp08;
+  padding: size.$sp04;
+  cursor: pointer;
+  display: flex;
+  color: color.$blue-violet;
+  transition: background 0.15s;
+  @include typography.headline-160;
+
+  &:hover:not(:disabled) {
+    background: rgba(color.$blue-violet, 0.1);
   }
 
   &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+    color: color.$muted-lighter;
+    cursor: default;
+  }
+
+  .material-icons {
+    @include typography.headline-160;
   }
 }
 
-html.dark .pagination-btn {
-  background: color.$white;
-  color: color.$dark;
+.page-info {
+  @include typography.headline-160-medium;
+  color: color.$muted;
+  min-width: 40px;
+  text-align: center;
+}
 
-  &.active {
-    background: color.$blue-violet;
-    color: color.$white;
+html.dark .page-btn {
+  color: color.$light;
+
+  &:disabled {
+    color: rgba(color.$light, 0.4);
   }
 }
 .food-card,
@@ -598,46 +702,58 @@ html.dark .pagination-btn {
 .food-card {
   padding: spacing.$spacing-xs;
   cursor: pointer;
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: spacing.$spacing-base;
 
   h3 {
+    flex: 1;
+    min-width: 0;
     @include typography.headline-140;
-    margin-bottom: spacing.$spacing-base;
-  }
-
-  button {
-    border: none;
-    border-radius: size.$sp08;
-    background: rgba(color.$gold, 0.2);
-    color: color.$dark-medium;
-    padding: spacing.$spacing-base spacing.$spacing-xs;
-    cursor: pointer;
-    @include typography.headline-120-medium;
+    margin-bottom: 0;
   }
 }
 
 .food-card-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: spacing.$spacing-base;
+  flex-direction: row;
+  align-items: center;
+  flex-shrink: 0;
+  gap: spacing.$spacing-xs;
+
+  i {
+    @include typography.headline-200-medium;
+  }
 }
 
-.save-food-btn {
-  border: none;
-  border-radius: size.$sp08;
-  background: rgba(color.$blue-violet, 0.12);
-  color: color.$blue-violet-dark;
-  padding: spacing.$spacing-base spacing.$spacing-xs;
+.food-details-icon {
+  flex-shrink: 0;
   cursor: pointer;
-  @include typography.headline-120-medium;
+  color: color.$muted;
+  @include typography.headline-180;
+  transition: color 0.15s;
 
-  &.saved {
-    background: rgba(color.$danger, 0.14);
-    color: color.$danger-dark;
+  &:hover {
+    color: color.$blue-violet;
+  }
+}
+
+.food-save-icon {
+  flex-shrink: 0;
+  cursor: pointer;
+  color: color.$blue-violet;
+  @include typography.headline-180;
+  transition: color 0.15s;
+
+  &:hover {
+    color: color.$muted-lighter;
   }
 
-  &:disabled {
+  &.saved {
+    color: color.$muted-lighter;
     cursor: default;
-    opacity: 0.9;
   }
 }
 
@@ -675,22 +791,37 @@ html.dark .pagination-btn {
   h3 {
     @include typography.headline-160;
   }
-
-  button {
-    border: none;
-    border-radius: size.$sp08;
-    background: rgba(color.$gold, 0.2);
-    color: color.$dark-medium;
-    padding: spacing.$spacing-base spacing.$spacing-xs;
-    cursor: pointer;
-    @include typography.headline-120-medium;
-  }
 }
 
 .food-detail-actions {
   display: flex;
   align-items: center;
-  gap: spacing.$spacing-base;
+  gap: spacing.$spacing-xs;
+  flex-shrink: 0;
+
+  i {
+    @include typography.headline-200-medium;
+  }
+}
+
+.food-close-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: size.$sp32;
+  height: size.$sp32;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(color.$danger, 0.12);
+  color: color.$danger-dark;
+  transition:
+    background 0.15s,
+    color 0.15s;
+
+  &:hover {
+    background: color.$danger;
+    color: color.$white;
+  }
 }
 
 .nutrient-grid {
@@ -746,23 +877,12 @@ html.dark .pagination-btn {
     color: color.$light;
   }
 
-  .save-food-btn {
-    background: rgba(color.$light, 0.12);
-    color: color.$light;
-
-    &.saved {
-      background: rgba(color.$danger-light, 0.2);
-      color: color.$light;
-    }
-  }
-
   .food-meta,
   .nutrient-box span {
     color: color.$light50;
   }
 
-  .letter-chip,
-  .pagination-btn {
+  .letter-chip {
     background: rgba(color.$light, 0.12);
     color: color.$light;
   }
@@ -771,14 +891,25 @@ html.dark .pagination-btn {
     color: color.$light50;
   }
 
-  .page-size-select {
+  .page-size-btn {
     background: color.$dark-medium;
     color: color.$light;
     border-color: rgba(color.$light, 0.25);
   }
 
-  .letter-chip.active,
-  .pagination-btn.active {
+  .page-size-dropdown {
+    background: color.$dark-medium;
+  }
+
+  .page-size-option {
+    color: color.$light;
+
+    &:hover {
+      background: rgba(color.$light, 0.1);
+    }
+  }
+
+  .letter-chip.active {
     background: color.$gold;
     color: color.$white;
   }

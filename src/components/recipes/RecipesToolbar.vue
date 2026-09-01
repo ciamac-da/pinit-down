@@ -136,14 +136,15 @@ export default {
   display: flex;
   flex-direction: column;
   position: sticky;
-  top: 0;
+  top: -10px;
   background: color.$light;
   z-index: 8;
-  padding-bottom: spacing.$spacing-base;
+  padding : spacing.$spacing-xxs 0;
   gap: spacing.$spacing-xxs;
 
   @include breakpoint.media-breakpoint-up(sm) {
     gap: spacing.$spacing-s;
+    padding-bottom: spacing.$spacing-base;
   }
 }
 

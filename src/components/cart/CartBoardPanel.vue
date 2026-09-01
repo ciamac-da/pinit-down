@@ -9,6 +9,14 @@ export default {
     CartItemForm,
     NearbyStoresModal,
   },
+  mounted() {
+    this.updateToolbarHeight();
+    this.toolbarResizeObserver = new ResizeObserver(() => this.updateToolbarHeight());
+    this.toolbarResizeObserver.observe(this.$refs.toolbar);
+  },
+  beforeUnmount() {
+    this.toolbarResizeObserver?.disconnect();
+  },
   props: {
     cartStore: {
       type: Object,
@@ -79,9 +87,15 @@ export default {
     return {
       quickAddGroup: null,
       nearbyShopName: '',
+      isTouchDevice: window.matchMedia('(pointer: coarse)').matches,
+      toolbarHeight: 0,
+      openGroupMenu: null,
     };
   },
   methods: {
+    updateToolbarHeight() {
+      this.toolbarHeight = this.$refs.toolbar?.offsetHeight ?? 0;
+    },
     onGroupDragStart(event, groupName) {
       const groupEl = event.currentTarget.closest('.item-group');
       if (groupEl && event.dataTransfer) {
@@ -141,8 +155,8 @@ export default {
 </script>
 
 <template>
-  <div>
-    <div class="cart-board-toolbar">
+  <div :style="{ '--group-sticky-top': toolbarHeight + 'px' }">
+    <div class="cart-board-toolbar" ref="toolbar">
       <CartItemForm />
 
       <button
@@ -170,7 +184,7 @@ export default {
       >
         <div
           class="group-header"
-          draggable="true"
+          :draggable="!isTouchDevice"
           @dragstart.stop="onGroupDragStart($event, groupName)"
           @dragover.prevent="onGroupHeaderDragOver(groupName)"
           @dragleave="onGroupHeaderDragLeave"
@@ -237,38 +251,58 @@ export default {
             >
               <i class="material-icons">near_me</i>
             </button>
-            <button
-              class="favorite-group-btn"
-              :class="{
-                'save-all-saved':
-                  cartStore.isCartGroupFullyFavorited(groupName),
-              }"
-              :disabled="cartStore.isCartGroupFullyFavorited(groupName)"
-              @click.stop="
-                !cartStore.isCartGroupFullyFavorited(groupName) &&
-                $emit('add-group-to-favorites', groupName)
-              "
-              :title="
-                cartStore.isCartGroupFullyFavorited(groupName)
-                  ? 'All items already saved'
-                  : 'Save shop as template'
-              "
-            >
-              <i class="material-icons">bookmark_add</i>
-            </button>
-            <button
-              class="delete-group-btn"
-              @click.stop="$emit('request-group-delete', groupName)"
-              title="Delete shop"
-            >
-              <i class="material-icons">delete</i>
-            </button>
+            <div class="group-more-menu-wrapper">
+              <button
+                class="group-more-btn"
+                @click.stop="
+                  openGroupMenu = openGroupMenu === groupName ? null : groupName
+                "
+                title="More actions"
+              >
+                <i class="material-icons">more_vert</i>
+              </button>
+              <div
+                v-if="openGroupMenu === groupName"
+                class="group-more-backdrop"
+                @click.stop="openGroupMenu = null"
+              ></div>
+              <div v-if="openGroupMenu === groupName" class="group-more-dropdown">
+                <button
+                  type="button"
+                  class="group-more-option"
+                  :disabled="cartStore.isCartGroupFullyFavorited(groupName)"
+                  @click.stop="
+                    openGroupMenu = null;
+                    !cartStore.isCartGroupFullyFavorited(groupName) &&
+                      $emit('add-group-to-favorites', groupName)
+                  "
+                >
+                  <i class="material-icons">bookmark_add</i>
+                  {{
+                    cartStore.isCartGroupFullyFavorited(groupName)
+                      ? 'All items already saved'
+                      : 'Save shop as template'
+                  }}
+                </button>
+                <button
+                  type="button"
+                  class="group-more-option danger"
+                  @click.stop="
+                    openGroupMenu = null;
+                    $emit('request-group-delete', groupName)
+                  "
+                >
+                  <i class="material-icons">delete</i>
+                  Delete shop
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         <div
           v-for="(item, idx) in itemsByGroup[groupName]"
           :key="item._id"
-          draggable="true"
+          :draggable="!isTouchDevice"
           class="draggable-row"
           :class="{
             'drag-over': dragOverId === item._id,
@@ -288,6 +322,15 @@ export default {
             :total="itemsByGroup[groupName].length"
           />
         </div>
+
+        <button
+          type="button"
+          class="add-item-end-btn"
+          @click.stop="quickAddGroup = groupName"
+        >
+          <i class="material-icons">add_circle</i>
+          Add item to {{ groupName }}
+        </button>
       </div>
 
       <div
@@ -335,7 +378,7 @@ export default {
   top: 0;
   z-index: 8;
   background: color.$light;
-  padding: spacing.$spacing-l 0 spacing.$spacing-base 0;
+  padding: spacing.$spacing-m 0 spacing.$spacing-base 0;
 
   @include breakpoint.media-breakpoint-up(sm) {
     padding: spacing.$spacing-xs 0 spacing.$spacing-base 0;
@@ -344,7 +387,7 @@ export default {
 
 .download-collection-btn {
   align-self: center;
-  margin: spacing.$spacing-xs 0;
+  margin: spacing.$spacing-xxs 0 spacing.$spacing-xs 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -389,6 +432,9 @@ export default {
   background: color.$gradient;
   border-radius: size.$sp10;
   cursor: grab;
+  position: sticky;
+  top: var(--group-sticky-top, 0px);
+  z-index: 7;
   transition:
     outline 0.15s,
     background 0.15s;
@@ -472,29 +518,10 @@ export default {
     gap: spacing.$spacing-xxs;
   }
 
-  .delete-group-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: rgba(color.$light, 0.7);
-    display: flex;
-    align-items: center;
-    padding: 0;
-    transition: color 0.15s;
-
-    .material-icons {
-      @include typography.headline-200;
-    }
-
-    &:hover {
-      color: color.$light;
-    }
-  }
-
-  .favorite-group-btn,
   .copy-group-btn,
   .add-item-to-group-btn,
-  .nearby-store-btn {
+  .nearby-store-btn,
+  .group-more-btn {
     background: none;
     border: none;
     cursor: pointer;
@@ -517,6 +544,68 @@ export default {
     &:disabled {
       opacity: 0.4;
       cursor: default;
+    }
+  }
+
+  .group-more-menu-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .group-more-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+  }
+
+  .group-more-dropdown {
+    position: absolute;
+    top: calc(100% + #{spacing.$spacing-xxs});
+    right: 0;
+    z-index: 21;
+    display: flex;
+    flex-direction: column;
+    padding: spacing.$spacing-xxs spacing.$spacing-xs;
+    gap: spacing.$spacing-xxs;
+    background: color.$white;
+    border-radius: size.$sp10;
+    box-shadow: size.$sp02 size.$sp04 size.$sp24 color.$dark;
+    overflow: hidden;
+    cursor: default;
+  }
+
+  .group-more-option {
+    display: flex;
+    align-items: center;
+    gap: spacing.$spacing-xxs;
+    border: none;
+    background: none;
+    padding: spacing.$spacing-xxs spacing.$spacing-base;
+    color: color.$dark;
+    cursor: pointer;
+    white-space: nowrap;
+    @include typography.headline-120-medium;
+
+    .material-icons {
+      @include typography.headline-160;
+      color: color.$dark50;
+    }
+
+    &:hover {
+      background: color.$light-bg-soft;
+    }
+
+    &:disabled {
+      cursor: default;
+      opacity: 0.5;
+    }
+
+    &.danger {
+      color: color.$danger-dark;
+      .material-icons {
+        color: color.$danger;
+      }
     }
   }
 
@@ -552,6 +641,32 @@ export default {
     border-color: color.$blue-violet;
     color: color.$blue-violet;
     background: rgba(color.$blue-violet, 0.06);
+  }
+}
+
+.add-item-end-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: spacing.$spacing-xxs;
+  width: 100%;
+  margin-top: spacing.$spacing-xxs;
+  padding: spacing.$spacing-xxs spacing.$spacing-base;
+  border: size.$sp02 dashed color.$border-dark;
+  border-radius: size.$sp10;
+  background: none;
+  color: color.$muted;
+  cursor: pointer;
+  @include typography.headline-120-medium;
+
+  .material-icons {
+    color: color.$blue-violet;
+    @include typography.headline-160;
+  }
+
+  &:hover {
+    border-color: color.$blue-violet;
+    color: color.$blue-violet;
   }
 }
 
@@ -596,6 +711,16 @@ export default {
   @include typography.headline-200;
   user-select: none;
   flex-shrink: 0;
+    display: none;
+
+  @media (pointer: coarse) {
+    display: none;
+  }
+
+  @include breakpoint.media-breakpoint-up(sm) {
+    display: flex;
+  }
+  
 }
 
 .empty-state {

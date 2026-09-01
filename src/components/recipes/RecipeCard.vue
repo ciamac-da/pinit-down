@@ -28,21 +28,22 @@ export default {
     />
     <div v-else class="recipe-card-image recipe-card-placeholder">No image</div>
     <div class="recipe-card-body">
-      <h3>{{ recipe.strMeal }}</h3>
+      <div class="recipe-card-title-row">
+        <h3>{{ recipe.strMeal }}</h3>
+         <button
+          type="button"
+          class="recipe-card-eye"
+          title="View details"
+          @click.stop="$emit('open-details', recipe)"
+        >
+          <i class="material-icons">visibility</i>
+        </button>
+      </div>
       <p>
         {{ recipe.strCategory || 'Recipe' }}
         <span v-if="recipe.strArea">• {{ recipe.strArea }}</span>
       </p>
-      <div class="recipe-card-actions" :class="{ 'has-save': showSaveAction }">
-        <button
-          type="button"
-          class="recipe-card-details"
-          @click.stop="$emit('open-details', recipe)"
-        >
-          <i class="material-icons">visibility</i>
-          See details
-        </button>
-
+      <div class="recipe-card-actions">
         <button
           v-if="showSaveAction"
           type="button"
@@ -50,7 +51,7 @@ export default {
           @click.stop="$emit('save-recipe', recipe)"
         >
           <i class="material-icons">bookmark_add</i>
-          Save recipe
+          Save
         </button>
 
         <button
@@ -59,7 +60,7 @@ export default {
           @click.stop="$emit('download-recipe', recipe)"
         >
           <i class="material-icons">picture_as_pdf</i>
-          Download recipe
+          Download
         </button>
       </div>
     </div>
@@ -110,12 +111,6 @@ export default {
 .recipe-card-body {
   padding: spacing.$spacing-s;
 
-  h3 {
-    margin: 0 0 spacing.$spacing-base;
-    color: color.$dark;
-    @include typography.headline-160-medium;
-  }
-
   p {
     margin: 0;
     color: color.$muted;
@@ -123,18 +118,52 @@ export default {
   }
 }
 
+.recipe-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-xxs;
+  margin-bottom: spacing.$spacing-base;
+
+  h3 {
+    margin: 0;
+    color: color.$dark;
+    @include typography.headline-160-medium;
+  }
+}
+
+.recipe-card-eye {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: size.$sp32;
+  height: size.$sp32;
+  border: none;
+  border-radius: 50%;
+  background: rgba(color.$blue-violet, 0.12);
+  color: color.$blue-violet-dark;
+  cursor: pointer;
+
+  .material-icons {
+    @include typography.headline-140;
+  }
+}
+
 .recipe-card-actions {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: spacing.$spacing-xxs;
   margin-top: spacing.$spacing-xs;
+
+  > button:only-child {
+    grid-column: 1 / -1;
+  }
 
   @include breakpoint.media-breakpoint-up(sm) {
     gap: spacing.$spacing-xs;
   }
 }
 
-.recipe-card-details,
 .recipe-card-save,
 .recipe-card-download {
   display: inline-flex;
@@ -151,11 +180,6 @@ export default {
   .material-icons {
     @include typography.headline-140;
   }
-}
-
-.recipe-card-details {
-  background: rgba(color.$blue-violet, 0.12);
-  color: color.$blue-violet-dark;
 }
 
 .recipe-card-download {
@@ -186,7 +210,7 @@ export default {
   color: color.$light;
 }
 
-:global(.dark) .recipe-card-details {
+:global(.dark) .recipe-card-eye {
   background: rgba(color.$light, 0.12);
   color: color.$light;
 }

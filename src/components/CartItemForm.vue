@@ -154,6 +154,7 @@ export default {
           isFav: false,
           group: resolvedGroupName,
         });
+        cartStore.showToast(`"${newCartItem.value.trim()}" added to ${resolvedGroupName}`, 'success');
         finalizeSuccessfulAdd();
       }
     };
@@ -201,6 +202,7 @@ export default {
         isFav: false,
         group: effectiveGroup.value,
       });
+      cartStore.showToast(`"${newCartItem.value.trim()}" added to ${effectiveGroup.value}`, 'success');
       finalizeSuccessfulAdd();
     };
 

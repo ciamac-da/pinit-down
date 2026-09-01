@@ -9,10 +9,10 @@ const CATEGORIES = [
     items: [
       { label: 'Restaurants', query: 'restaurant', icon: 'restaurant' },
       { label: 'Bars', query: 'bar pub', icon: 'local_bar' },
-      { label: 'Coffee', query: 'cafe coffee', icon: 'local_cafe' },
-      { label: 'Takeout', query: 'fast food takeaway', icon: 'fastfood' },
+      { label: 'Coffee', query: 'cafe', icon: 'local_cafe' },
+      { label: 'Takeout', query: 'fast food', icon: 'fastfood' },
       { label: 'Bakeries', query: 'bakery', icon: 'cake' },
-      { label: 'Pizza', query: 'pizza', icon: 'local_pizza' },
+      { label: 'Pizza', query: 'pizzeria', icon: 'local_pizza' },
     ],
   },
   {
@@ -21,10 +21,10 @@ const CATEGORIES = [
     icon: 'star',
     items: [
       { label: 'Parks', query: 'park', icon: 'park' },
-      { label: 'Gyms', query: 'gym fitness', icon: 'fitness_center' },
+      { label: 'Gyms', query: 'fitness', icon: 'fitness_center' },
       { label: 'Museums', query: 'museum', icon: 'museum' },
-      { label: 'Movies', query: 'cinema movie', icon: 'movie' },
-      { label: 'Attractions', query: 'tourist attraction', icon: 'tour' },
+      { label: 'Movies', query: 'cinema', icon: 'movie' },
+      { label: 'Attractions', query: 'attraction', icon: 'tour' },
       { label: 'Nightlife', query: 'nightclub', icon: 'nightlife' },
       { label: 'Libraries', query: 'library', icon: 'local_library' },
     ],
@@ -36,12 +36,12 @@ const CATEGORIES = [
     items: [
       {
         label: 'Groceries',
-        query: 'supermarket grocery',
+        query: 'supermarket',
         icon: 'local_grocery_store',
       },
-      { label: 'Shopping Centers', query: 'shopping mall', icon: 'store' },
-      { label: 'Electronics', query: 'electronics store', icon: 'devices' },
-      { label: 'Apparel', query: 'clothing fashion', icon: 'checkroom' },
+      { label: 'Shopping Centers', query: 'mall', icon: 'store' },
+      { label: 'Electronics', query: 'electronics shop', icon: 'devices' },
+      { label: 'Apparel', query: 'clothes shop', icon: 'checkroom' },
       { label: 'Pharmacies', query: 'pharmacy', icon: 'local_pharmacy' },
       { label: 'Convenience', query: 'convenience store', icon: 'storefront' },
     ],
@@ -55,15 +55,15 @@ const CATEGORIES = [
       { label: 'ATMs', query: 'ATM', icon: 'local_atm' },
       {
         label: 'Gas Stations',
-        query: 'gas station petrol',
+        query: 'gas station',
         icon: 'local_gas_station',
       },
-      { label: 'Hospitals', query: 'hospital clinic', icon: 'local_hospital' },
+      { label: 'Hospitals', query: 'hospital', icon: 'local_hospital' },
       { label: 'Parking', query: 'parking', icon: 'local_parking' },
       { label: 'Car Repair', query: 'car repair', icon: 'car_repair' },
       {
         label: 'Charging',
-        query: 'electric charging station',
+        query: 'charging station',
         icon: 'ev_station',
       },
     ],
@@ -211,8 +211,32 @@ export default {
       });
     },
     async fetchNearby(lat, lon, query) {
-      const delta = this.radius / 111;
-      const lonDelta = this.radius / (111 * Math.cos((lat * Math.PI) / 180));
+      // Nominatim ranks matches by importance/relevance, not distance, so a
+      // single large viewbox can push closer-but-less-"important" places out
+      // of the (max 50) results. Query nested smaller radii too and merge,
+      // so anything found at a smaller radius never disappears at a larger one.
+      const tierRadii = [...new Set(
+        [1, 5, 15, this.radius]
+          .map((r) => Math.min(r, this.radius))
+          .filter((r) => r > 0),
+      )];
+
+      const merged = new Map();
+      for (const tierRadius of tierRadii) {
+        const items = await this.fetchNearbyAtRadius(lat, lon, query, tierRadius);
+        for (const item of items) {
+          const key = `${item.lat.toFixed(5)},${item.lon.toFixed(5)}`;
+          if (!merged.has(key)) merged.set(key, item);
+        }
+      }
+
+      return [...merged.values()]
+        .filter((item) => item.dist <= this.radius)
+        .sort((a, b) => a.dist - b.dist);
+    },
+    async fetchNearbyAtRadius(lat, lon, query, radiusKm) {
+      const delta = radiusKm / 111;
+      const lonDelta = radiusKm / (111 * Math.cos((lat * Math.PI) / 180));
       const params = new URLSearchParams({
         q: query,
         format: 'json',
@@ -230,25 +254,22 @@ export default {
       if (!resp.ok)
         throw new Error('Search failed. Check your internet connection.');
       const data = await resp.json();
-      return data
-        .map((item) => {
-          const elLat = parseFloat(item.lat);
-          const elLon = parseFloat(item.lon);
-          const a = item.address || {};
-          const address =
-            [a.road, a.house_number, a.postcode, a.city || a.town || a.village]
-              .filter(Boolean)
-              .join(' ') || item.display_name.split(',').slice(0, 3).join(',');
-          return {
-            name: item.display_name.split(',')[0] || 'Unknown',
-            address,
-            lat: elLat,
-            lon: elLon,
-            dist: this.haversineKm(lat, lon, elLat, elLon),
-          };
-        })
-        .filter((item) => item.dist <= this.radius)
-        .sort((a, b) => a.dist - b.dist);
+      return data.map((item) => {
+        const elLat = parseFloat(item.lat);
+        const elLon = parseFloat(item.lon);
+        const a = item.address || {};
+        const address =
+          [a.road, a.house_number, a.postcode, a.city || a.town || a.village]
+            .filter(Boolean)
+            .join(' ') || item.display_name.split(',').slice(0, 3).join(',');
+        return {
+          name: item.display_name.split(',')[0] || 'Unknown',
+          address,
+          lat: elLat,
+          lon: elLon,
+          dist: this.haversineKm(lat, lon, elLat, elLon),
+        };
+      });
     },
     haversineKm(lat1, lon1, lat2, lon2) {
       const R = 6371;
@@ -265,17 +286,15 @@ export default {
       if (!this.selectedPlace) return;
       const { lat, lon, name } = this.selectedPlace;
       const enc = encodeURIComponent(name);
-      const isNativeApple = /iphone|ipad|ipod/i.test(navigator.userAgent);
       const isAndroid = /android/i.test(navigator.userAgent);
+      // Apple Maps: universal link opens the app directly on iOS/macOS, no custom scheme needed.
       const url =
         provider === 'apple'
-          ? isNativeApple
-            ? `maps://?q=${enc}&sll=${lat},${lon}&z=16`
-            : `https://maps.apple.com/?q=${enc}&sll=${lat},${lon}&z=16`
+          ? `https://maps.apple.com/?q=${enc}&sll=${lat},${lon}&z=16`
           : isAndroid
             ? `geo:${lat},${lon}?q=${lat},${lon}(${enc})`
             : `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
-      window.open(url, '_blank', 'noopener');
+      window.location.href = url;
       this.selectedPlace = null;
     },
     formatDist(km) {

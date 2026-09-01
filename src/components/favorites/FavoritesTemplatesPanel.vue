@@ -51,7 +51,6 @@ export default {
     'download-recipe',
     'download-group-pdf',
     'delete-favorite-group',
-    'delete-favorite-item',
     'delete-favorite-recipe',
     'delete-favorite-food-fact',
     'delete-saved-place',
@@ -59,6 +58,7 @@ export default {
   data() {
     return {
       selectedPlace: null,
+      openGroupMenu: null,
     };
   },
   computed: {
@@ -81,19 +81,17 @@ export default {
       if (!this.selectedPlace) return;
       const { lat, lon, name } = this.selectedPlace;
       const enc = encodeURIComponent(name);
-      const isNativeApple = /iphone|ipad|ipod/i.test(navigator.userAgent);
       const isAndroid = /android/i.test(navigator.userAgent);
       let url;
       if (provider === 'apple') {
-        url = isNativeApple
-          ? `maps://?q=${enc}&sll=${lat},${lon}&z=16`
-          : `https://maps.apple.com/?q=${enc}&sll=${lat},${lon}&z=16`;
+        // Universal link: iOS/macOS Safari opens the Maps app directly, no custom scheme needed.
+        url = `https://maps.apple.com/?q=${enc}&sll=${lat},${lon}&z=16`;
       } else {
         url = isAndroid
           ? `geo:${lat},${lon}?q=${lat},${lon}(${enc})`
           : `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
       }
-      window.open(url, '_blank', 'noopener');
+      window.location.href = url;
       this.selectedPlace = null;
     },
   },
@@ -109,23 +107,7 @@ export default {
         :class="{ active: templateFilter === 'cart' }"
         @click="$emit('update:templateFilter', 'cart')"
       >
-        Saved Shops ({{ favoriteCartTemplateCount }})
-      </button>
-      <button
-        type="button"
-        class="favorite-type-btn"
-        :class="{ active: templateFilter === 'recipes' }"
-        @click="$emit('update:templateFilter', 'recipes')"
-      >
-        Saved Recipe ({{ favoriteRecipeTemplateCount }})
-      </button>
-      <button
-        type="button"
-        class="favorite-type-btn"
-        :class="{ active: templateFilter === 'foods' }"
-        @click="$emit('update:templateFilter', 'foods')"
-      >
-        Saved Foods ({{ favoriteFoodFactTemplateCount }})
+        Shops ({{ favoriteCartTemplateCount }})
       </button>
       <button
         type="button"
@@ -133,7 +115,23 @@ export default {
         :class="{ active: templateFilter === 'places' }"
         @click="$emit('update:templateFilter', 'places')"
       >
-        Saved Places ({{ savedPlaces.length }})
+        Places ({{ savedPlaces.length }})
+      </button>
+      <button
+        type="button"
+        class="favorite-type-btn"
+        :class="{ active: templateFilter === 'recipes' }"
+        @click="$emit('update:templateFilter', 'recipes')"
+      >
+        Recipes ({{ favoriteRecipeTemplateCount }})
+      </button>
+      <button
+        type="button"
+        class="favorite-type-btn"
+        :class="{ active: templateFilter === 'foods' }"
+        @click="$emit('update:templateFilter', 'foods')"
+      >
+        Food Facts ({{ favoriteFoodFactTemplateCount }})
       </button>
     </div>
     <p class="favorite-info-hint">
@@ -150,34 +148,58 @@ export default {
       >
         <div class="group-header favorites-group-header">
           <div class="group-header-top">
-            <span class="group-name">{{ groupName }}</span>
-            <span class="group-count"
-              >{{ favoriteCartTemplatesByGroup[groupName].length }}
-              {{
-                favoriteCartTemplatesByGroup[groupName].length <= 1
-                  ? 'saved item'
-                  : 'saved items'
-              }}</span
-            >
-          </div>
-          <div class="group-header-bottom">
-            <button
-              type="button"
-              class="download-group-btn"
-              @click.stop="$emit('download-group-pdf', groupName)"
-              title="Download saved shopping list"
-            >
-              <i class="material-icons">picture_as_pdf</i>
-              Download
-            </button>
-            <button
-              class="delete-group-btn"
-              @click.stop="$emit('delete-favorite-group', groupName)"
-              title="Delete saved shop"
-            >
-              <i class="material-icons">delete</i>
-              Delete
-            </button>
+            <div class="group-header-left">
+              <span class="group-name">{{ groupName }}</span>
+              <span class="group-count"
+                >{{ favoriteCartTemplatesByGroup[groupName].length }}
+                {{
+                  favoriteCartTemplatesByGroup[groupName].length <= 1
+                    ? 'saved item'
+                    : 'saved items'
+                }}</span
+              >
+            </div>
+            <div class="group-more-menu-wrapper">
+              <button
+                type="button"
+                class="group-more-btn"
+                @click.stop="
+                  openGroupMenu = openGroupMenu === groupName ? null : groupName
+                "
+                title="More actions"
+              >
+                <i class="material-icons">more_vert</i>
+              </button>
+              <div
+                v-if="openGroupMenu === groupName"
+                class="group-more-backdrop"
+                @click.stop="openGroupMenu = null"
+              ></div>
+              <div v-if="openGroupMenu === groupName" class="group-more-dropdown">
+                <button
+                  type="button"
+                  class="group-more-option"
+                  @click.stop="
+                    openGroupMenu = null;
+                    $emit('download-group-pdf', groupName)
+                  "
+                >
+                  <i class="material-icons">picture_as_pdf</i>
+                  Download list
+                </button>
+                <button
+                  type="button"
+                  class="group-more-option danger"
+                  @click.stop="
+                    openGroupMenu = null;
+                    $emit('delete-favorite-group', groupName)
+                  "
+                >
+                  <i class="material-icons">delete</i>
+                  Delete shop
+                </button>
+              </div>
+            </div>
           </div>
         </div>
         <div
@@ -185,20 +207,12 @@ export default {
           :key="item._id"
           class="favorite-template-row"
         >
-          <button
-            type="button"
-            class="delete-saved-item-btn"
-            title="Remove saved item"
-            @click="$emit('delete-favorite-item', item)"
-          >
-            <i class="material-icons">delete</i>
-          </button>
           <CartItemDetails
             :cart-item="item"
             :index="idx"
             :total="favoriteCartTemplatesByGroup[groupName].length"
             :is-saved-view="true"
-            :can-delete="false"
+            :can-delete="true"
           />
         </div>
       </div>
@@ -223,7 +237,7 @@ export default {
             title="Remove saved recipe"
             @click="$emit('delete-favorite-recipe', favoriteRecipe)"
           >
-            Delete
+            <i class="material-icons">delete</i>
           </button>
           <RecipeCard
             :recipe="favoriteRecipe"
@@ -249,7 +263,7 @@ export default {
             title="Remove saved food fact"
             @click="$emit('delete-favorite-food-fact', foodFact)"
           >
-            Delete
+            <i class="material-icons">delete</i>
           </button>
 
           <h3>{{ foodFact.title }}</h3>
@@ -367,18 +381,19 @@ export default {
 }
 
 .favorites-template-toggle {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: spacing.$spacing-xxs;
   padding: spacing.$spacing-xs 0;
   position: sticky;
   top: -10px;
   z-index: 8;
-  background: color.$light-bg;
+  background: color.$light;
 
   @include breakpoint.media-breakpoint-up(sm) {
-    margin-bottom: spacing.$spacing-xl;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 }
 
@@ -421,6 +436,14 @@ export default {
   .group-header-top {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: spacing.$spacing-xxs;
+  }
+
+  .group-header-left {
+    display: flex;
+    align-items: center;
     gap: spacing.$spacing-xxs;
   }
 
@@ -436,42 +459,22 @@ export default {
     color: rgba(color.$light, 0.8);
   }
 
-  .group-header-bottom {
+  .group-more-menu-wrapper {
+    position: relative;
     display: flex;
     align-items: center;
-    gap: spacing.$spacing-xxs;
+    flex-shrink: 0;
   }
 
-  .delete-group-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: rgba(color.$light, 0.7);
-    display: flex;
-    align-items: center;
-    padding: 0;
-    transition: color 0.15s;
-
-    .material-icons {
-      @include typography.headline-200;
-    }
-
-    &:hover {
-      color: color.$light;
-    }
-  }
-
-  .download-group-btn {
+  .group-more-btn {
     background: none;
     border: none;
     cursor: pointer;
     color: rgba(color.$light, 0.8);
     display: flex;
     align-items: center;
-    gap: spacing.$spacing-xxs;
     padding: 0;
     transition: color 0.15s;
-    @include typography.headline-120-medium;
 
     .material-icons {
       @include typography.headline-200;
@@ -479,6 +482,56 @@ export default {
 
     &:hover {
       color: color.$light;
+    }
+  }
+
+  .group-more-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+  }
+
+  .group-more-dropdown {
+    position: absolute;
+    top: calc(100% + #{spacing.$spacing-xxs});
+    right: 0;
+    z-index: 21;
+    display: flex;
+    padding: spacing.$spacing-xxs spacing.$spacing-xs;
+    flex-direction: column;
+    gap: spacing.$spacing-xxs;
+    background: color.$white;
+    border-radius: size.$sp10;
+    box-shadow: size.$sp02 size.$sp04 size.$sp24 color.$dark;
+    overflow: hidden;
+  }
+
+  .group-more-option {
+    display: flex;
+    align-items: center;
+    gap: spacing.$spacing-xxs;
+    border: none;
+    background: none;
+    padding: spacing.$spacing-xxs spacing.$spacing-base;
+    color: color.$dark;
+    cursor: pointer;
+    white-space: nowrap;
+    @include typography.headline-120-medium;
+
+    .material-icons {
+      @include typography.headline-160;
+      color: color.$dark50;
+    }
+
+    &:hover {
+      background: color.$light-bg-soft;
+    }
+
+    &.danger {
+      color: color.$danger-dark;
+      .material-icons {
+        color: color.$danger;
+      }
     }
   }
 }
@@ -499,25 +552,12 @@ export default {
   :deep(.cart-items) {
     flex: 1;
     margin-top: spacing.$spacing-xxs;
+    flex-direction: column;
+    padding: 0 spacing.$spacing-xxs;
   }
-}
-
-.delete-saved-item-btn {
-  flex-shrink: 0;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: color.$muted;
-  padding: spacing.$spacing-xxs;
-  display: flex;
-  align-items: center;
-
-  .material-icons {
-    @include typography.headline-180;
-  }
-
-  &:hover {
-    color: color.$danger;
+  :deep(.cart-item) {
+    flex-direction: column;
+    margin: inherit;
   }
 }
 
@@ -542,20 +582,32 @@ export default {
 
 .remove-template-btn {
   position: absolute;
-  top: spacing.$spacing-base;
-  right: spacing.$spacing-base;
+  top: spacing.$spacing-xxs;
+  right: spacing.$spacing-xxs;
   z-index: 2;
+  width: size.$sp36;
+  height: size.$sp36;
   border: none;
-  border-radius: size.$sp08;
-  min-height: size.$sp24;
-  padding: 0 spacing.$spacing-base;
+  border-radius: 50%;
+  padding: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background: rgba(color.$dark-deep, 0.9);
+  background: rgba(color.$dark-deep, 0.55);
   color: color.$white;
-  @include typography.headline-100;
+  transition:
+    background 0.15s,
+    color 0.15s;
+
+  .material-icons {
+    @include typography.headline-160;
+  }
+
+  &:hover {
+    background: color.$danger;
+    color: color.$white;
+  }
 }
 
 .saved-places-list {
@@ -599,7 +651,8 @@ export default {
 .saved-place-actions {
   display: flex;
   align-items: center;
-  gap: size.$sp02;
+  justify-content: space-between;
+  gap: size.$sp12;
   flex-shrink: 0;
 }
 
@@ -663,7 +716,7 @@ export default {
   }
 
   .material-icons {
-    @include typography.headline-180;
+    @include typography.headline-200;
   }
 }
 

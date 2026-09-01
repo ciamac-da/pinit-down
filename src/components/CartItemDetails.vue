@@ -20,6 +20,8 @@ export default {
     const cartStore = useCartStore();
     const { groups } = storeToRefs(cartStore);
     const showDeleteDialog = ref(false);
+    const showMoveMenu = ref(false);
+    const showMoreMenu = ref(false);
     const editing = ref(false);
     const editTitle = ref('');
     const editAmount = ref(null);
@@ -109,7 +111,11 @@ export default {
     };
 
     const confirmDelete = () => {
-      cartStore.deleteCartItem(props.cartItem._id);
+      if (props.isSavedView) {
+        cartStore.deleteSavedItem(props.cartItem._id);
+      } else {
+        cartStore.deleteCartItem(props.cartItem._id);
+      }
       showDeleteDialog.value = false;
     };
 
@@ -184,11 +190,24 @@ export default {
       () => `Are you sure you want to delete "${props.cartItem.title}"?`,
     );
 
+    const moveTargetGroups = computed(() =>
+      editableGroups.value.filter(
+        (g) => g !== (props.cartItem.group || 'General'),
+      ),
+    );
+
+    const moveToGroup = (targetGroup) => {
+      cartStore.editCartItem(props.cartItem._id, { group: targetGroup });
+      showMoveMenu.value = false;
+    };
+
     return {
       cartStore,
       groups,
       editableGroups,
       showDeleteDialog,
+      showMoveMenu,
+      showMoreMenu,
       editing,
       editTitle,
       editAmount,
@@ -201,6 +220,8 @@ export default {
       itemDisplayUnit,
       onUnitEditChange,
       deleteMessage,
+      moveTargetGroups,
+      moveToGroup,
       requestDelete,
       cancelDelete,
       confirmDelete,
@@ -255,12 +276,25 @@ export default {
       <p v-if="editError" class="edit-error">{{ editError }}</p>
     </div>
     <div v-else class="cart-item" :class="{ purchased: cartItem.isPurchased }">
-      <h4 :class="{ strikethrough: cartItem.isPurchased }">
-        {{ cartItem.title }}
-
-        <span class="item-measure"
-          >{{ itemDisplayAmount(cartItem) }}
-          {{ itemDisplayUnit(cartItem) }}</span
+      <h4
+        :class="{
+          strikethrough: cartItem.isPurchased,
+          'has-saved-delete': isSavedView && canDelete,
+        }"
+      >
+        <span class="item-title-text">
+          {{ cartItem.title }}
+          <span class="item-measure"
+            >{{ itemDisplayAmount(cartItem) }}
+            {{ itemDisplayUnit(cartItem) }}</span
+          >
+        </span>
+        <i
+          v-if="isSavedView && canDelete"
+          @click.stop="requestDelete"
+          class="material-icons saved-delete-icon"
+          title="Remove saved item"
+          >delete</i
         >
       </h4>
       <div class="icon">
@@ -283,20 +317,62 @@ export default {
           "
           >shopping_cart</i
         >
-        <i
-          v-if="!isSavedView"
-          @click="!cartStore.isCartItemSaved(cartItem._id) && cartStore.saveItem(cartItem._id)"
-          class="material-icons save-icon"
-          :class="{ saved: cartStore.isCartItemSaved(cartItem._id) }"
-          :title="cartStore.isCartItemSaved(cartItem._id) ? 'Already saved' : 'Save item'"
-          >bookmark_add</i
-        >
-        <i
-          v-if="canDelete"
-          @click="requestDelete"
-          class="material-icons delete-icon"
-          >delete</i
-        >
+        <div v-if="!isSavedView" class="more-menu-wrapper">
+          <i
+            @click="showMoreMenu = !showMoreMenu"
+            class="material-icons more-icon"
+            title="More actions"
+            >more_vert</i
+          >
+          <div
+            v-if="showMoreMenu"
+            class="more-menu-backdrop"
+            @click="showMoreMenu = false"
+          ></div>
+          <div v-if="showMoreMenu" class="more-menu-dropdown">
+            <button
+              type="button"
+              class="more-menu-option"
+              :disabled="cartStore.isCartItemSaved(cartItem._id)"
+              @click="
+                showMoreMenu = false;
+                !cartStore.isCartItemSaved(cartItem._id) &&
+                  cartStore.saveItem(cartItem._id);
+              "
+            >
+              <i class="material-icons">bookmark_add</i>
+              {{
+                cartStore.isCartItemSaved(cartItem._id)
+                  ? 'Already saved'
+                  : 'Save item'
+              }}
+            </button>
+            <button
+              v-if="moveTargetGroups.length > 0"
+              type="button"
+              class="more-menu-option"
+              @click="
+                showMoreMenu = false;
+                showMoveMenu = true;
+              "
+            >
+              <i class="material-icons">send</i>
+              Move to another shop
+            </button>
+            <button
+              v-if="canDelete"
+              type="button"
+              class="more-menu-option danger"
+              @click="
+                showMoreMenu = false;
+                requestDelete();
+              "
+            >
+              <i class="material-icons">delete</i>
+              Delete
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -309,6 +385,32 @@ export default {
       @confirm="confirmDelete"
       @cancel="cancelDelete"
     />
+
+    <div
+      v-if="showMoveMenu"
+      class="move-menu-overlay"
+      @click.self="showMoveMenu = false"
+    >
+      <div class="move-menu">
+        <p class="move-menu-label">Move "{{ cartItem.title }}" to</p>
+        <button
+          v-for="g in moveTargetGroups"
+          :key="g"
+          type="button"
+          class="move-menu-item"
+          @click="moveToGroup(g)"
+        >
+          {{ g }}
+        </button>
+        <button
+          type="button"
+          class="move-menu-cancel"
+          @click="showMoveMenu = false"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -320,7 +422,7 @@ export default {
 @use '@/styles/abstracts/typography';
 
 .cart-items {
-  padding: spacing.$spacing-xxs;
+  padding: spacing.$spacing-base;
   background: color.$light;
   margin-top: spacing.$spacing-s;
   border-radius: size.$sp12;
@@ -341,6 +443,27 @@ export default {
       flex: 1;
       word-break: break-word;
       margin: 0;
+
+      &.has-saved-delete {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: spacing.$spacing-xxs;
+        width: 100%;
+      }
+    }
+
+    .saved-delete-icon {
+      flex-shrink: 0;
+      margin-left: 0;
+      padding: spacing.$spacing-base;
+      cursor: pointer;
+      color: color.$muted;
+      @include typography.headline-180;
+
+      &:hover {
+        color: color.$danger;
+      }
     }
 
     .icon {
@@ -365,6 +488,10 @@ export default {
       color: color.$gold;
     }
   }
+
+    @include breakpoint.media-breakpoint-up(sm) {
+      padding: spacing.$spacing-xxs;
+  }
 }
 
 .strikethrough {
@@ -386,22 +513,122 @@ export default {
   }
 }
 
-.delete-icon {
+.more-menu-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.more-icon {
   cursor: pointer;
+}
+
+.more-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+
+.more-menu-dropdown {
+  position: absolute;
+  bottom: calc(100% + #{spacing.$spacing-xxs});
+  right: 0;
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  min-width: 180px;
+  background: color.$white;
+  border-radius: size.$sp10;
+  box-shadow: size.$sp02 size.$sp04 size.$sp24 color.$dark;
+  overflow: hidden;
+}
+
+.more-menu-option {
+  display: flex;
+  align-items: center;
+  gap: spacing.$spacing-xxs;
+  border: none;
+  background: none;
+  padding: spacing.$spacing-xxs spacing.$spacing-base;
+  color: color.$dark;
+  cursor: pointer;
+  white-space: nowrap;
+  @include typography.headline-120-medium;
+
+  .material-icons {
+    @include typography.headline-160;
+    color: color.$dark50;
+    margin-left: 0;
+  }
+
   &:hover {
-    color: color.$danger !important;
+    background: color.$light-bg-soft;
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+
+  &.danger {
+    color: color.$danger-dark;
+    .material-icons {
+      color: color.$danger;
+    }
   }
 }
 
-.save-icon {
+.move-menu-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(color.$dark, 0.45);
+  display: flex;
+  align-items: flex-end;
+  z-index: 500;
+}
+
+.move-menu {
+  width: 100%;
+  background: color.$white;
+  padding: spacing.$spacing-s;
+  display: flex;
+  flex-direction: column;
+  gap: spacing.$spacing-xxs;
+  border-radius: size.$sp12 size.$sp12 0 0;
+}
+
+.move-menu-label {
+  @include typography.headline-140-medium;
+  color: color.$dark;
+  margin: 0 0 spacing.$spacing-xxs;
+  text-align: center;
+}
+
+.move-menu-item {
+  border: size.$sp02 solid color.$border;
+  border-radius: size.$sp10;
+  padding: spacing.$spacing-xxs spacing.$spacing-base;
+  background: color.$white;
+  color: color.$dark;
   cursor: pointer;
+  @include typography.headline-140-medium;
+
   &:hover {
-    color: color.$gold !important;
+    border-color: color.$blue-violet;
+    color: color.$blue-violet;
   }
-  &.saved {
-    color: color.$gold;
-    cursor: default;
-    opacity: 0.5;
+}
+
+.move-menu-cancel {
+  background: none;
+  border: none;
+  cursor: pointer;
+  @include typography.headline-120;
+  color: color.$muted;
+  text-align: center;
+  padding: spacing.$spacing-base 0 0;
+  &:hover {
+    color: color.$dark;
   }
 }
 
@@ -486,14 +713,6 @@ export default {
     }
   }
 }
-</style>
-
-<style lang="scss">
-// Unscoped: Vue's scoped :global() can't reach an ancestor class like html.dark
-// that lives outside this component; it collapses to a bare `.dark { ... }`
-// which then matches ANY element carrying a literal "dark" class.
-@use '@/styles/abstracts/color';
-@use '@/styles/abstracts/size';
 
 html.dark .cart-items .cart-item {
   color: color.$dark;

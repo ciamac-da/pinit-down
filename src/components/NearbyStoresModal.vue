@@ -134,18 +134,15 @@ export default {
       const encodedName = encodeURIComponent(name);
       let url;
       if (provider === 'apple') {
-        // maps:// for native apps, https:// fallback for browsers (Apple Maps works in Safari on any platform).
-        const isNative = /iphone|ipad|ipod/i.test(navigator.userAgent);
-        url = isNative
-          ? `maps://?q=${encodedName}&sll=${lat},${lon}&z=16`
-          : `https://maps.apple.com/?q=${encodedName}&sll=${lat},${lon}&z=16`;
+        // Universal link: iOS/macOS Safari opens the Maps app directly, no custom scheme needed.
+        url = `https://maps.apple.com/?q=${encodedName}&sll=${lat},${lon}&z=16`;
       } else {
         const isAndroid = /android/i.test(navigator.userAgent);
         url = isAndroid
           ? `geo:${lat},${lon}?q=${lat},${lon}(${encodedName})`
           : `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`;
       }
-      window.open(url, '_blank', 'noopener');
+      window.location.href = url;
       this.selectedStore = null;
     },
     selectStore(store) {

@@ -754,7 +754,9 @@ export default {
     );
 
     const favoriteTemplateCount = computed(
-      () => Object.keys(savedByGroup.value || {}).length,
+      () =>
+        Object.keys(savedByGroup.value || {}).length +
+        (cartStore.savedPlaces?.length || 0),
     );
 
     const canDownloadCartPdf = computed(() =>
@@ -1605,7 +1607,7 @@ export default {
           </div>
           <h1 class="splash-title">Pinit Down</h1>
           <p class="splash-description">
-            Pin your items. Track your shop. Stay organized.
+            Your shopping lists, recipes, food facts &amp; saved places — all in one place.
           </p>
           <div class="splash-dots">
             <span class="dot"></span>
@@ -1700,7 +1702,6 @@ export default {
                 @download-recipe="downloadRecipePdf"
                 @download-group-pdf="downloadFavoriteCartTemplateGroupPdf"
                 @delete-favorite-group="requestGroupDelete($event, true)"
-                @delete-favorite-item="cartStore.deleteSavedItem($event._id)"
                 @delete-favorite-recipe="requestRecipeTemplateDelete"
                 @delete-favorite-food-fact="requestFoodFactTemplateDelete"
                 @delete-saved-place="cartStore.deleteSavedPlace($event.id)"
@@ -1731,7 +1732,7 @@ export default {
                 Browse all recipes, search by name, or jump by first letter.
                 Open <strong>See details</strong> to view ingredients,
                 instructions, the recipe on its source website, and the YouTube
-                video.
+                video. You can also save the recipe for later use or even Download it as a PDF.
               </p>
 
               <p v-if="recipesLoading" class="empty-state">
@@ -1766,11 +1767,12 @@ export default {
             <div v-if="filter === 'PlaceFinder'" class="recipes-view">
               <NearbyPlacesView />
             </div>
+
           </div>
+            <AppFooter :year="copyrightYear" />
+
         </div>
       </div>
-
-      <AppFooter :year="copyrightYear" />
 
       <div
         v-if="toast.visible"
