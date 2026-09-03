@@ -493,14 +493,21 @@ export default {
   h3 {
     margin: 0;
     color: color.$dark;
-    @include typography.headline-180-medium;
+    @include typography.headline-240-medium;
+  }
+
+  .modal-close-btn {
+  .material-icons {
+    color: color.$blue-violet;
+    @include typography.headline-280-medium;
+  }
   }
 }
 
 .modal-close-btn {
   border: none;
   background: transparent;
-  color: color.$muted;
+  color: color.$blue-violet;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -508,10 +515,6 @@ export default {
 
   .material-icons {
     @include typography.headline-200;
-  }
-
-  &:hover {
-    color: color.$dark;
   }
 }
 
@@ -528,6 +531,7 @@ export default {
     border-radius: size.$sp12;
     @include typography.headline-140;
     background: color.$white;
+    text-align: center;
 
     &:focus,
     &:active {
@@ -541,7 +545,7 @@ export default {
     flex-direction: row;
     gap: spacing.$spacing-xxs;
     align-items: center;
-    background-color: color.$gold;
+    background-color: color.$blue-violet;
     color: color.$light;
     justify-content: center;
     border: none;
@@ -555,10 +559,6 @@ export default {
       width: inherit;
       padding: spacing.$spacing-xxs;
     }
-
-    &:hover {
-      scale: 1.04;
-    }
   }
   @include breakpoint.media-breakpoint-up(sm) {
     padding-top: spacing.$spacing-m;
@@ -568,9 +568,12 @@ export default {
 .create-group-row {
   display: flex;
   flex-direction: column;
-  gap: size.$sp08;
-  margin-top: spacing.$spacing-xs;
+  gap: spacing.$spacing-s;
+  margin-top: spacing.$spacing-l;
 
+  button {
+    color: color.$white;
+  }
   @include breakpoint.media-breakpoint-up(sm) {
     flex-direction: row;
     align-items: center;
@@ -585,9 +588,15 @@ export default {
 .group-input-wrapper {
   display: flex;
   align-items: center;
-  gap: size.$sp08;
+  gap: spacing.$spacing-s;
   flex: 1;
   width: 100%;
+
+  &.focus,
+  &.focused,
+  &:active {
+    border-color: color.$blue-violet;
+  }
 
   @include breakpoint.media-breakpoint-up(sm) {
     width: auto;
@@ -597,16 +606,17 @@ export default {
 .group-select-wrapper {
   display: flex;
   flex-direction: row;
-  gap: size.$sp08;
+  gap: spacing.$spacing-xs;
   width: 100%;
 
-  @include breakpoint.media-breakpoint-up(sm) {
+  button {
+    padding: spacing.$spacing-xxs;
   }
 }
 
 .item-meta-row {
   display: flex;
-  gap: size.$sp08;
+  gap: spacing.$spacing-xxs;
 
   .unit-select,
   .amount-input {
@@ -625,6 +635,7 @@ export default {
   padding: spacing.$spacing-base spacing.$spacing-xxs;
   @include typography.headline-160;
   background: color.$white;
+  color: color.$dark;
   outline: none;
   width: inherit;
 
@@ -659,6 +670,14 @@ export default {
   flex: 1;
   min-width: 0;
   text-transform: uppercase;
+  text-align: center;
+  padding: spacing.$spacing-xs;
+
+    &:focus,
+    &:active {
+      outline: none;
+      border-color: color.$blue-violet;
+    }
 }
 
 .add-group-btn {
@@ -696,7 +715,7 @@ export default {
   cursor: pointer;
   color: color.$muted;
   padding: spacing.$spacing-base;
-  @include typography.headline-180;
+  @include typography.headline-200;
 
   &:hover {
     color: color.$dark;
@@ -717,24 +736,22 @@ export default {
 }
 
 .groups-hint {
-  @include typography.headline-120;
+  @include typography.headline-160;
   color: color.$muted;
-  text-align: -webkit-center;
 
   .material-icons {
     color: color.$blue-violet;
     margin-right: spacing.$spacing-base * 0.5;
-    @include typography.headline-160;
+    @include typography.headline-200;
   }
 }
 
 .favorites-hint {
-  @include typography.headline-120;
+  @include typography.headline-160;
   color: color.$muted;
-  text-align: -webkit-center;
 
   .material-icons {
-    color: color.$danger;
+    color: color.$blue-violet;
     margin-right: spacing.$spacing-base * 0.5;
     @include typography.headline-160;
   }
@@ -767,5 +784,78 @@ html.dark .modal-close-btn:hover {
 
 html.dark .toggle-add-btn {
   background-color: color.$gold;
+}
+
+html.dark .form-panel-header {
+  h3 {
+    margin: 0;
+    color: color.$white;
+  }
+
+  .modal-close-btn {
+  .material-icons {
+    color: color.$gold;
+    @include typography.headline-240-medium;
+  }
+  }
+}
+
+html.dark .submit-form {
+  input {
+    border: size.$sp02 solid color.$border;
+    background: color.$dark;
+
+    &:focus,
+    &:active {
+      outline: none;
+      border-color: color.$gold;
+    }
+  }
+
+  button {
+    background-color: color.$gold;
+    color: color.$light;
+  }
+}
+
+html.dark .amount-input,
+html.dark .unit-select,
+html.dark  .group-select {
+  background: color.$dark;
+  color: color.$light;
+
+  &:focus {
+    border-color: color.$gold;
+  }
+}
+
+html.dark .groups-hint {
+  color: color.$white;
+
+  .material-icons {
+    color: color.$gold;
+  }
+}
+
+html.dark .favorites-hint {
+  color: color.$white;
+
+  .material-icons {
+    color: color.$gold;
+  }
+}
+
+html.dark .create-group-row {
+  .add-group-btn {
+    background-color: color.$gold;
+  }
+}
+
+html.dark .group-input {
+    &:focus,
+    &:active {
+      outline: none;
+      border-color: color.$gold;
+    }
 }
 </style>

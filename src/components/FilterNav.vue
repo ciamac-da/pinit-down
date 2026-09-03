@@ -102,16 +102,11 @@ export default {
   }
 }
 
-.filter button:hover {
-  transform: scale(1.04);
-}
-
 .filter button.active {
   background-color: color.$gold;
   color: color.$light;
   font-weight: bold;
   box-shadow: 0 size.$sp02 size.$sp04 color.$dark;
-  transform: scale(1.04);
   width: 100%;
   justify-content: center;
 
