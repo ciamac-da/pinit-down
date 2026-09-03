@@ -50,7 +50,7 @@ export default {
 </script>
 
 <template>
-  <header>
+  <header class="app-header">
     <div class="header-content">
       <div class="logo-section">
         <a class="logo" href="/">
@@ -102,6 +102,19 @@ export default {
           </button>
         </div>
 
+        <button
+          @click="
+            $emit('toggle-theme');
+            closeMobileMenu();
+          "
+          :class="{ dark: isDark }"
+          class="theme-toggle"
+          :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+        >
+          <i class="material-icons">{{
+            isDark ? 'dark_mode' : 'light_mode'
+          }}</i>
+        </button>
         <div class="mobile-nav-wrapper">
           <button
             class="mobile-menu-toggle"
@@ -155,20 +168,6 @@ export default {
             </button>
           </div>
         </div>
-
-        <button
-          @click="
-            $emit('toggle-theme');
-            closeMobileMenu();
-          "
-          :class="{ dark: isDark }"
-          class="theme-toggle"
-          :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
-        >
-          <i class="material-icons">{{
-            isDark ? 'dark_mode' : 'light_mode'
-          }}</i>
-        </button>
       </div>
     </div>
   </header>
@@ -181,7 +180,7 @@ export default {
 @use '@/styles/abstracts/size';
 @use '@/styles/abstracts/typography';
 
-header {
+.app-header {
   position: fixed;
   top: 0;
   left: 0;
@@ -202,6 +201,7 @@ header {
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    padding: spacing.$spacing-base spacing.$spacing-xs;
     max-width: size.$sp-max-desktop;
     min-height: size.$sp32;
   }
@@ -279,11 +279,11 @@ h1 {
     border-radius: size.$sp06;
     padding: spacing.$spacing-xxs;
     cursor: pointer;
-    @include typography.headline-120-medium;
+    @include typography.headline-160-medium;
     transition: 0.2s linear all;
 
     .material-icons {
-      @include typography.headline-140;
+      @include typography.headline-200;
     }
 
     &:hover {
@@ -391,4 +391,24 @@ h1 {
     }
   }
 }
+
+html.dark .app-header {
+  background: color.$gold;
+}
+html.dark .theme-toggle {
+
+    i {
+      color: color.$blue-violet;
+    }
+  }
+
+  html.dark .mobile-menu-dropdown {
+    background: color.$dark;
+    border-color: color.$dark;
+  }
+  html.dark .nav-btn {
+     &.active {
+      background-color: color.$gold;
+    }
+  }
 </style>

@@ -22,6 +22,7 @@ export default {
     const showDeleteDialog = ref(false);
     const showMoveMenu = ref(false);
     const showMoreMenu = ref(false);
+    const moreMenuStyle = ref({});
     const editing = ref(false);
     const editTitle = ref('');
     const editAmount = ref(null);
@@ -201,6 +202,22 @@ export default {
       showMoveMenu.value = false;
     };
 
+    const toggleMoreMenu = (event) => {
+      if (showMoreMenu.value) {
+        showMoreMenu.value = false;
+        return;
+      }
+      // Teleported to body, so position it manually from the trigger's rect
+      // instead of relying on a positioned ancestor.
+      const rect = event.currentTarget.getBoundingClientRect();
+      moreMenuStyle.value = {
+        position: 'fixed',
+        bottom: `${window.innerHeight - rect.top + 4}px`,
+        right: `${window.innerWidth - rect.right}px`,
+      };
+      showMoreMenu.value = true;
+    };
+
     return {
       cartStore,
       groups,
@@ -208,6 +225,7 @@ export default {
       showDeleteDialog,
       showMoveMenu,
       showMoreMenu,
+      moreMenuStyle,
       editing,
       editTitle,
       editAmount,
@@ -228,6 +246,7 @@ export default {
       startEdit,
       cancelEdit,
       saveEdit,
+      toggleMoreMenu,
     };
   },
 };
@@ -276,27 +295,34 @@ export default {
       <p v-if="editError" class="edit-error">{{ editError }}</p>
     </div>
     <div v-else class="cart-item" :class="{ purchased: cartItem.isPurchased }">
-      <h4
-        :class="{
-          strikethrough: cartItem.isPurchased,
-          'has-saved-delete': isSavedView && canDelete,
-        }"
-      >
-        <span class="item-title-text">
-          {{ cartItem.title }}
-          <span class="item-measure"
-            >{{ itemDisplayAmount(cartItem) }}
-            {{ itemDisplayUnit(cartItem) }}</span
-          >
-        </span>
-        <i
-          v-if="isSavedView && canDelete"
-          @click.stop="requestDelete"
-          class="material-icons saved-delete-icon"
-          title="Remove saved item"
-          >delete</i
+      <div class="cart-item-left">
+        <span
+          class="item-number"
+          :class="{ strikethrough: cartItem.isPurchased }"
+          >{{ index + 1 }}-</span
         >
-      </h4>
+        <p
+          :class="{
+            strikethrough: cartItem.isPurchased,
+            'has-saved-delete': isSavedView && canDelete,
+          }"
+        >
+          <span class="item-title-text">
+            {{ cartItem.title }}
+            <span class="item-measure"
+              >{{ itemDisplayAmount(cartItem) }}
+              {{ itemDisplayUnit(cartItem) }}</span
+            >
+          </span>
+          <i
+            v-if="isSavedView && canDelete"
+            @click.stop="requestDelete"
+            class="material-icons saved-delete-icon"
+            title="Remove saved item"
+            >delete</i
+          >
+        </p>
+      </div>
       <div class="icon">
         <i
           v-if="!isSavedView"
@@ -319,66 +345,72 @@ export default {
         >
         <div v-if="!isSavedView" class="more-menu-wrapper">
           <i
-            @click="showMoreMenu = !showMoreMenu"
+            @click="toggleMoreMenu($event)"
             class="material-icons more-icon"
             title="More actions"
             >more_vert</i
           >
-          <div
-            v-if="showMoreMenu"
-            class="more-menu-backdrop"
-            @click="showMoreMenu = false"
-          ></div>
-          <div v-if="showMoreMenu" class="more-menu-dropdown">
-            <button
-              type="button"
-              class="more-menu-option"
-              :disabled="cartStore.isCartItemSaved(cartItem._id)"
-              @click="
-                showMoreMenu = false;
-                !cartStore.isCartItemSaved(cartItem._id) &&
-                  cartStore.saveItem(cartItem._id);
-              "
+          <Teleport to="body">
+            <div
+              v-if="showMoreMenu"
+              class="more-menu-backdrop"
+              @click="showMoreMenu = false"
+            ></div>
+            <div
+              v-if="showMoreMenu"
+              class="more-menu-dropdown"
+              :style="moreMenuStyle"
             >
-              <i class="material-icons">bookmark_add</i>
-              {{
-                cartStore.isCartItemSaved(cartItem._id)
-                  ? 'Already saved'
-                  : 'Save item'
-              }}
-            </button>
-            <button
-              v-if="moveTargetGroups.length > 0"
-              type="button"
-              class="more-menu-option"
-              @click="
-                showMoreMenu = false;
-                showMoveMenu = true;
-              "
-            >
-              <i class="material-icons">send</i>
-              Move to another shop
-            </button>
-            <button
-              v-if="canDelete"
-              type="button"
-              class="more-menu-option danger"
-              @click="
-                showMoreMenu = false;
-                requestDelete();
-              "
-            >
-              <i class="material-icons">delete</i>
-              Delete
-            </button>
-          </div>
+              <button
+                type="button"
+                class="more-menu-option"
+                :disabled="cartStore.isCartItemSaved(cartItem._id)"
+                @click="
+                  showMoreMenu = false;
+                  !cartStore.isCartItemSaved(cartItem._id) &&
+                    cartStore.saveItem(cartItem._id);
+                "
+              >
+                <i class="material-icons">bookmark_add</i>
+                {{
+                  cartStore.isCartItemSaved(cartItem._id)
+                    ? 'Already saved'
+                    : 'Save item'
+                }}
+              </button>
+              <button
+                v-if="moveTargetGroups.length > 0"
+                type="button"
+                class="more-menu-option"
+                @click="
+                  showMoreMenu = false;
+                  showMoveMenu = true;
+                "
+              >
+                <i class="material-icons">send</i>
+                Move to another shop
+              </button>
+              <button
+                v-if="canDelete"
+                type="button"
+                class="more-menu-option danger"
+                @click="
+                  showMoreMenu = false;
+                  requestDelete();
+                "
+              >
+                <i class="material-icons">delete</i>
+                Delete
+              </button>
+            </div>
+          </Teleport>
         </div>
       </div>
     </div>
 
     <ConfirmDialog
       :open="showDeleteDialog"
-      title="Delete item"
+      :title="`Delete ${cartItem.title}`"
       :message="deleteMessage"
       confirm-text="Delete"
       cancel-text="Keep"
@@ -392,6 +424,13 @@ export default {
       @click.self="showMoveMenu = false"
     >
       <div class="move-menu">
+        <button
+          type="button"
+          class="move-menu-close"
+          @click="showMoveMenu = false"
+        >
+          <i class="material-icons">close</i>
+        </button>
         <p class="move-menu-label">Move "{{ cartItem.title }}" to</p>
         <button
           v-for="g in moveTargetGroups"
@@ -401,13 +440,6 @@ export default {
           @click="moveToGroup(g)"
         >
           {{ g }}
-        </button>
-        <button
-          type="button"
-          class="move-menu-cancel"
-          @click="showMoveMenu = false"
-        >
-          Cancel
         </button>
       </div>
     </div>
@@ -425,24 +457,46 @@ export default {
   padding: spacing.$spacing-base;
   background: color.$light;
   margin-top: spacing.$spacing-s;
-  border-radius: size.$sp12;
+  border-radius: size.$sp06;
   box-shadow: size.$sp02 size.$sp04 size.$sp24 color.$dark;
   justify-content: space-between;
   align-items: center;
   transition: 0.2s linear all;
 
   .cart-item {
-    display: inline-flex;
+    display: flex;
     align-items: center;
+    justify-content: space-between;
     width: 100%;
-    flex-direction: column-reverse;
+    padding: spacing.$spacing-xxs;
     gap: spacing.$spacing-base;
     color: color.$dark;
+    position: relative;
 
-    h4 {
+
+    .cart-item-left {
+      display: flex;
+      align-items: center;
+      gap: spacing.$spacing-xxs;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .item-number {
+      flex-shrink: 0;
+      color: color.$muted;
+      @include typography.headline-160-medium;
+      min-width: size.$sp16;
+      text-align: right;
+      align-self: self-end;
+    }
+
+    p {
       flex: 1;
       word-break: break-word;
       margin: 0;
+      @include typography.headline-180-medium;
+
 
       &.has-saved-delete {
         display: flex;
@@ -468,10 +522,10 @@ export default {
 
     .icon {
       display: flex;
-      width: 100%;
-      justify-content: space-around;
+      width: auto;
+      justify-content: flex-end;
       align-items: center;
-      gap: spacing.$spacing-xxs;
+      gap: spacing.$spacing-xs;
       flex-shrink: 0;
     }
 
@@ -481,11 +535,6 @@ export default {
       cursor: pointer;
       color: color.$dark50;
       transition: 0.2s linear all;
-    }
-
-    i.active,
-    i:hover {
-      color: color.$gold;
     }
   }
 
@@ -504,13 +553,7 @@ export default {
 }
 
 .purchased-icon {
-  color: color.$success !important;
-}
-
-.purchased-icon-hover {
-  &:hover {
-    color: color.$blue !important;
-  }
+  color: color.$blue-violet !important;
 }
 
 .more-menu-wrapper {
@@ -533,7 +576,8 @@ export default {
   position: absolute;
   bottom: calc(100% + #{spacing.$spacing-xxs});
   right: 0;
-  z-index: 21;
+  z-index: 9999999;
+  padding: spacing.$spacing-xxs;
   display: flex;
   flex-direction: column;
   min-width: 180px;
@@ -549,20 +593,16 @@ export default {
   gap: spacing.$spacing-xxs;
   border: none;
   background: none;
-  padding: spacing.$spacing-xxs spacing.$spacing-base;
+  padding: spacing.$spacing-xxs;
   color: color.$dark;
   cursor: pointer;
   white-space: nowrap;
-  @include typography.headline-120-medium;
+  @include typography.headline-160-medium;
 
   .material-icons {
-    @include typography.headline-160;
+    @include typography.headline-200;
     color: color.$dark50;
     margin-left: 0;
-  }
-
-  &:hover {
-    background: color.$light-bg-soft;
   }
 
   &:disabled {
@@ -588,6 +628,7 @@ export default {
 }
 
 .move-menu {
+  position: relative;
   width: 100%;
   background: color.$white;
   padding: spacing.$spacing-s;
@@ -595,6 +636,26 @@ export default {
   flex-direction: column;
   gap: spacing.$spacing-xxs;
   border-radius: size.$sp12 size.$sp12 0 0;
+}
+
+.move-menu-close {
+  position: absolute;
+  top: spacing.$spacing-xxs;
+  right: spacing.$spacing-xxs;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: color.$muted;
+  display: flex;
+  padding: spacing.$spacing-base;
+
+  .material-icons {
+    @include typography.headline-280;
+  }
+
+  &:hover {
+    color: color.$dark;
+  }
 }
 
 .move-menu-label {
@@ -619,19 +680,6 @@ export default {
   }
 }
 
-.move-menu-cancel {
-  background: none;
-  border: none;
-  cursor: pointer;
-  @include typography.headline-120;
-  color: color.$muted;
-  text-align: center;
-  padding: spacing.$spacing-base 0 0;
-  &:hover {
-    color: color.$dark;
-  }
-}
-
 .edit-icon {
   cursor: pointer;
   @include typography.headline-180;
@@ -644,7 +692,7 @@ export default {
   display: flex;
   align-items: stretch;
   flex-direction: column;
-  gap: size.$sp08;
+  gap: spacing.$spacing-s;
   width: 100%;
 }
 
@@ -693,11 +741,12 @@ export default {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: size.$sp20;
+  gap: size.$sp24;
+  padding: spacing.$spacing-xxs;
 
   .edit-save {
     color: color.$success;
-    @include typography.headline-200;
+    @include typography.headline-240;
     cursor: pointer;
     &:hover {
       color: color.$success-alt;
@@ -706,7 +755,7 @@ export default {
 
   .edit-cancel {
     color: color.$muted;
-    @include typography.headline-200;
+    @include typography.headline-240;
     cursor: pointer;
     &:hover {
       color: color.$dark;
@@ -714,12 +763,51 @@ export default {
   }
 }
 
+html.dark .item-title-text {
+  color: color.$white;
+}
+
+html.dark .cart-items {
+  background-color: color.$dark;
+  border: size.$sp02 solid rgba(color.$light, 0.15);
+  box-shadow: none;
+  }
+
+html.dark .cart-item {
+  i {
+  color: color.$white;
+  }
+}
+
 html.dark .cart-items .cart-item {
   color: color.$dark;
-  box-shadow: size.$sp02 size.$sp04 size.$sp24 color.$light;
+  box-shadow: none;
+  background: color.$dark;
 }
 
 html.dark .cart-items h4 {
-  color: color.$dark;
+  color: color.$white;
+}
+
+html.dark .purchased-icon {
+  color: color.$gold !important;
+}
+
+
+html.dark .item-number {
+  color: color.$white !important;
+  }
+
+html.dark .item-measure {
+  color: color.$white;
+}
+
+html .more-menu-dropdown {
+  background: color.$dark;
+  color: color.$white;
+
+  .more-menu-option {
+    color: color.$white;
+  }
 }
 </style>

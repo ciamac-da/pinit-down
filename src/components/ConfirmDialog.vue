@@ -93,9 +93,11 @@ export default {
 }
 
 .confirm-actions {
-  display: flex;
+  display: inline-flex;
   justify-content: flex-end;
   gap: spacing.$spacing-xxs;
+  justify-content: space-around;
+  width: 100%;
 }
 
 .cancel-btn,
@@ -115,5 +117,17 @@ export default {
 .delete-btn {
   background: color.$danger;
   color: color.$white;
+}
+
+html.dark .confirm-dialog {
+  background: color.$dark;
+    box-shadow: size.$sp01 size.$sp01 size.$sp20 color.$white;
+  h3 {
+    color: color.$white;
+  }
+
+  p {
+    color: color.$white;
+  }
 }
 </style>

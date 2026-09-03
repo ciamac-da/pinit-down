@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Pinit Down</string>
+    <string name="title_activity_main">Pinit Down</string>
+    <string name="package_name">com.pinitdown.app</string>
+    <string name="custom_url_scheme">com.pinitdown.app</string>
+</resources>

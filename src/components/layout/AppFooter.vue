@@ -188,4 +188,31 @@ export default {
   color: color.$white;
   @include typography.headline-140-medium;
 }
+
+html.dark .app-footer {
+  background: color.$gold;
+  color: color.$dark50;
+}
+
+html.dark .credits-dialog {
+  background: color.$dark;
+  box-shadow: 0 size.$sp06 size.$sp24 rgba(color.$white, 0.35);
+
+  h3 {
+    color: color.$white;
+  }
+
+   p {
+    color: color.$white;
+  }
+
+  .credits-list,
+  .credits-list strong {
+    color: color.$white;
+  }
+
+  .credits-close-btn {
+    background-color: color.$gold;
+  }
+}
 </style>

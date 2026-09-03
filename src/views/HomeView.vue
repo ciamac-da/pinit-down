@@ -35,11 +35,9 @@ export default {
     const filter = ref('All');
     const recipeLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
     const recipeSearchQuery = ref('');
-    const ingredientQuery = ref('');
     const selectedRecipeLetter = ref('All');
     const selectedRecipeCategory = ref('All');
     const recipeCategories = ref([]);
-    const recipeIngredientCatalog = ref([]);
     const recipes = ref([]);
     const recipesLoading = ref(false);
     const recipesError = ref('');
@@ -51,7 +49,7 @@ export default {
     const showSplash = ref(true);
     const copyrightYear = ref(new Date().getFullYear());
     let yearIntervalId = null;
-    let ingredientSearchTimeoutId = null;
+    let recipeSearchTimeoutId = null;
     const mealDbBaseUrl = 'https://www.themealdb.com/api/json/v1/1';
     const supportedRecipeUnits = {
       g: 'gram',
@@ -423,22 +421,9 @@ export default {
       }
     };
 
-    const loadRecipeIngredientCatalog = async () => {
-      try {
-        const response = await fetch(`${mealDbBaseUrl}/list.php?i=list`);
-        if (!response.ok) throw new Error();
-
-        const data = await response.json();
-        recipeIngredientCatalog.value = data.meals || [];
-      } catch {
-        recipeIngredientCatalog.value = [];
-      }
-    };
-
     const loadAllRecipes = async () => {
       selectedRecipeLetter.value = 'All';
       selectedRecipeCategory.value = 'All';
-      ingredientQuery.value = '';
       await fetchRecipesFromUrl(
         `${mealDbBaseUrl}/search.php?s=${encodeURIComponent('')}`,
       );
@@ -447,7 +432,6 @@ export default {
     const searchRecipes = async () => {
       selectedRecipeLetter.value = 'All';
       selectedRecipeCategory.value = 'All';
-      ingredientQuery.value = '';
       await fetchRecipesFromUrl(
         `${mealDbBaseUrl}/search.php?s=${encodeURIComponent(recipeSearchQuery.value.trim())}`,
       );
@@ -457,7 +441,6 @@ export default {
       selectedRecipeLetter.value = letter;
       selectedRecipeCategory.value = 'All';
       recipeSearchQuery.value = '';
-      ingredientQuery.value = '';
       await fetchRecipesFromUrl(
         `${mealDbBaseUrl}/search.php?f=${encodeURIComponent(letter.toLowerCase())}`,
       );
@@ -467,7 +450,6 @@ export default {
       selectedRecipeCategory.value = category;
       selectedRecipeLetter.value = 'All';
       recipeSearchQuery.value = '';
-      ingredientQuery.value = '';
       recipes.value = [];
 
       if (category === 'All') {
@@ -481,72 +463,14 @@ export default {
       });
     };
 
-    const searchRecipesByIngredient = async () => {
-      selectedRecipeCategory.value = 'All';
-      selectedRecipeLetter.value = 'All';
-      recipeSearchQuery.value = '';
-
-      const normalizedQuery = ingredientQuery.value.trim().toLowerCase();
-
-      if (!normalizedQuery) {
-        await loadAllRecipes();
-        return;
+    const onRecipeSearchInput = () => {
+      if (recipeSearchTimeoutId) {
+        clearTimeout(recipeSearchTimeoutId);
       }
 
-      recipesLoading.value = true;
-      recipesError.value = '';
-
-      try {
-        const matchedIngredients = recipeIngredientCatalog.value
-          .filter((ingredient) =>
-            ingredient.strIngredient?.toLowerCase().includes(normalizedQuery),
-          )
-          .slice(0, 8);
-
-        if (!matchedIngredients.length) {
-          recipes.value = [];
-          return;
-        }
-
-        const filterResults = await Promise.all(
-          matchedIngredients.map(async (ingredient) => {
-            const response = await fetch(
-              `${mealDbBaseUrl}/filter.php?i=${encodeURIComponent(ingredient.strIngredient)}`,
-            );
-
-            if (!response.ok) return [];
-
-            const data = await response.json();
-            return data.meals || [];
-          }),
-        );
-
-        const mergedMeals = [
-          ...new Map(
-            filterResults.flat().map((meal) => [meal.idMeal, meal]),
-          ).values(),
-        ];
-
-        recipes.value = await fetchRecipeDetailsByIds(mergedMeals);
-      } catch (error) {
-        recipes.value = [];
-        recipesError.value =
-          error instanceof Error
-            ? error.message
-            : 'Could not load recipes right now.';
-      } finally {
-        recipesLoading.value = false;
-      }
-    };
-
-    const onIngredientInput = () => {
-      if (ingredientSearchTimeoutId) {
-        clearTimeout(ingredientSearchTimeoutId);
-      }
-
-      ingredientSearchTimeoutId = setTimeout(() => {
-        searchRecipesByIngredient();
-      }, 250);
+      recipeSearchTimeoutId = setTimeout(() => {
+        searchRecipes();
+      }, 300);
     };
 
     const openRecipeModal = async (recipe) => {
@@ -639,7 +563,7 @@ export default {
             !isRecipeFavoriteItem(item) &&
             !isFoodFactFavoriteItem(item),
         )
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+        .sort((a, b) => a.title.localeCompare(b.title));
 
       sorted.forEach((item) => {
         const groupName = item.group || 'General';
@@ -1106,7 +1030,6 @@ export default {
     // drag state
     const draggedId = ref(null);
     const dragOverId = ref(null);
-    const draggedGroup = ref(null);
     const dragOverGroup = ref(null);
 
     const {
@@ -1126,7 +1049,6 @@ export default {
       cartStore.loadCartItems();
       updateCopyrightYear();
       loadRecipeCategories();
-      loadRecipeIngredientCatalog();
       yearIntervalId = setInterval(updateCopyrightYear, 60 * 60 * 1000);
       setTimeout(() => {
         showSplash.value = false;
@@ -1138,8 +1060,8 @@ export default {
         clearInterval(yearIntervalId);
       }
 
-      if (ingredientSearchTimeoutId) {
-        clearTimeout(ingredientSearchTimeoutId);
+      if (recipeSearchTimeoutId) {
+        clearTimeout(recipeSearchTimeoutId);
       }
     });
 
@@ -1322,53 +1244,12 @@ export default {
     const onDragEnd = () => {
       draggedId.value = null;
       dragOverId.value = null;
-      draggedGroup.value = null;
       dragOverGroup.value = null;
     };
 
     // --- Drag-and-drop groups ---
-    const GROUP_END = '__group_end__';
-
-    const onGroupDragStart = (groupName) => {
-      draggedGroup.value = groupName;
-    };
-
-    const onGroupDragOver = (groupName) => {
-      if (groupName !== draggedGroup.value && draggedGroup.value) {
-        dragOverGroup.value = groupName;
-      }
-    };
-
     const onGroupDragLeave = () => {
       dragOverGroup.value = null;
-    };
-
-    const onGroupDrop = (targetGroup, position = 'before') => {
-      dragOverGroup.value = null;
-      if (!draggedGroup.value || draggedGroup.value === targetGroup) return;
-
-      const currentOrder = [...groups.value];
-      const fromIdx = currentOrder.indexOf(draggedGroup.value);
-      if (fromIdx === -1) return;
-
-      currentOrder.splice(fromIdx, 1);
-
-      if (targetGroup === GROUP_END) {
-        currentOrder.push(draggedGroup.value);
-        cartStore.reorderGroups(currentOrder);
-        draggedGroup.value = null;
-        return;
-      }
-
-      // Re-find target index after removal, then offset by drop position (upper/lower half of target).
-      const targetIdx = currentOrder.indexOf(targetGroup);
-      if (targetIdx === -1) return;
-
-      const insertIdx = position === 'after' ? targetIdx + 1 : targetIdx;
-      currentOrder.splice(insertIdx, 0, draggedGroup.value);
-      cartStore.reorderGroups(currentOrder);
-
-      draggedGroup.value = null;
     };
 
     const groupDeleteDialog = ref({
@@ -1508,7 +1389,6 @@ export default {
       toast,
       recipeLetters,
       recipeSearchQuery,
-      ingredientQuery,
       selectedRecipeLetter,
       selectedRecipeCategory,
       recipeCategories,
@@ -1533,7 +1413,6 @@ export default {
       canDownloadCartPdf,
       draggedId,
       dragOverId,
-      draggedGroup,
       dragOverGroup,
       groupDeleteDialog,
       templateDeleteDialog,
@@ -1551,10 +1430,7 @@ export default {
       onDropOnSavedGroup,
       onDropOnGroup,
       onDragEnd,
-      onGroupDragStart,
-      onGroupDragOver,
       onGroupDragLeave,
-      onGroupDrop,
       requestGroupDelete,
       cancelGroupDelete,
       confirmGroupDelete,
@@ -1570,8 +1446,7 @@ export default {
       openNearbyRestaurants,
       openPlaceFinder,
       onRecipeSearchSubmit,
-      searchRecipesByIngredient,
-      onIngredientInput,
+      onRecipeSearchInput,
       resetRecipeSearch,
       filterRecipesByLetter,
       filterRecipesByCategory,
@@ -1605,6 +1480,7 @@ export default {
               class="splash-logo"
             />
           </div>
+          <div class="splash-divider">
           <h1 class="splash-title">Pinit Down</h1>
           <p class="splash-description">
             Your shopping lists, recipes, food facts &amp; saved places — all in one place.
@@ -1613,6 +1489,7 @@ export default {
             <span class="dot"></span>
             <span class="dot"></span>
             <span class="dot"></span>
+          </div>
           </div>
         </div>
       </div>
@@ -1658,16 +1535,11 @@ export default {
                 :items-by-group="itemsByGroup"
                 :dragged-id="draggedId"
                 :drag-over-id="dragOverId"
-                :dragged-group="draggedGroup"
-                :drag-over-group="dragOverGroup"
                 :editing-group="editingGroup"
                 :edit-group-name="editGroupName"
                 @download-cart-pdf="downloadCartPdf"
-                @group-drag-start="onGroupDragStart"
-                @group-drag-over="onGroupDragOver"
                 @group-drag-leave="onGroupDragLeave"
                 @set-drag-over-group="dragOverGroup = $event"
-                @group-drop="onGroupDrop"
                 @drop-on-group="onDropOnGroup"
                 @drag-end="onDragEnd"
                 @update-edit-group-name="editGroupName = $event"
@@ -1714,16 +1586,13 @@ export default {
                 :recipe-search-query="recipeSearchQuery"
                 :selected-recipe-category="selectedRecipeCategory"
                 :recipe-categories="recipeCategories"
-                :ingredient-query="ingredientQuery"
                 :selected-recipe-letter="selectedRecipeLetter"
                 :recipe-letters="recipeLetters"
                 @update-filters-open="isRecipeFiltersOpen = $event"
                 @update-recipe-search-query="recipeSearchQuery = $event"
-                @update-ingredient-query="ingredientQuery = $event"
                 @submit-recipe-search="onRecipeSearchSubmit"
+                @recipe-search-input="onRecipeSearchInput"
                 @filter-by-category="filterRecipesByCategory"
-                @submit-ingredient-search="searchRecipesByIngredient"
-                @ingredient-input="onIngredientInput"
                 @reset-recipes="resetRecipeSearch"
                 @filter-by-letter="filterRecipesByLetter"
               />
@@ -1850,7 +1719,7 @@ main {
     display: inline-flex;
     margin: 0 auto;
     text-align: center;
-    padding: spacing.$spacing-xs spacing.$spacing-xs spacing.$spacing-base
+    padding: spacing.$spacing-s * 1.1 spacing.$spacing-xs spacing.$spacing-base
       spacing.$spacing-xs;
     gap: spacing.$spacing-m;
     width: 100%;
@@ -1949,6 +1818,7 @@ main {
   color: color.$muted;
   @include typography.headline-120;
   text-align: center;
+  padding-bottom: spacing.$spacing-xs;
 }
 
 .recipes-error {
@@ -1969,7 +1839,7 @@ main {
   }
 }
 
-:global(.dark) .recipes-hint {
+html.dark .recipes-hint {
   color: color.$light50;
 }
 
@@ -1990,7 +1860,7 @@ main {
 }
 
 .toast-info {
-  background: rgba(color.$blue-violet-dark, 0.95);
+  background: rgba(color.$blue-violet, 0.95);
 }
 
 .toast-success {
@@ -1999,6 +1869,11 @@ main {
 
 .toast-warning {
   background: rgba(color.$danger, 0.95);
+}
+
+html.dark .toast-info {
+  background: color.$gold;
+  color: color.$white;
 }
 
 .splash-screen {
@@ -2028,6 +1903,10 @@ main {
   @include typography.headline-360-medium;
   margin-top: spacing.$spacing-xs;
   letter-spacing: -0.02em;
+}
+
+.splash-divider {
+  padding: 0 spacing.$spacing-s;
 }
 
 .splash-description {

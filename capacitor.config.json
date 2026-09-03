@@ -1,0 +1,9 @@
+{
+  "appId": "com.pinitdown.app",
+  "appName": "Pinit Down",
+  "webDir": "dist",
+  "backgroundColor": "#ffffff",
+  "server": {
+    "androidScheme": "https"
+  }
+}

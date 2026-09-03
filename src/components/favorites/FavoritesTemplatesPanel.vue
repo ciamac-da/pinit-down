@@ -1,11 +1,13 @@
 <script>
 import CartItemDetails from '@/components/CartItemDetails.vue';
 import RecipeCard from '@/components/recipes/RecipeCard.vue';
+import NearbyStoresModal from '@/components/NearbyStoresModal.vue';
 
 export default {
   components: {
     CartItemDetails,
     RecipeCard,
+    NearbyStoresModal,
   },
   props: {
     templateFilter: {
@@ -59,7 +61,17 @@ export default {
     return {
       selectedPlace: null,
       openGroupMenu: null,
+      nearbyShopName: '',
+      toggleHeight: 0,
     };
+  },
+  mounted() {
+    this.updateToggleHeight();
+    this.toggleResizeObserver = new ResizeObserver(() => this.updateToggleHeight());
+    this.toggleResizeObserver.observe(this.$refs.toggle);
+  },
+  beforeUnmount() {
+    this.toggleResizeObserver?.disconnect();
   },
   computed: {
     savedPlacesByCategory() {
@@ -74,6 +86,9 @@ export default {
     },
   },
   methods: {
+    updateToggleHeight() {
+      this.toggleHeight = this.$refs.toggle?.offsetHeight ?? 0;
+    },
     openPlaceModal(place) {
       this.selectedPlace = place;
     },
@@ -99,8 +114,8 @@ export default {
 </script>
 
 <template>
-  <div>
-    <div class="favorites-template-toggle">
+  <div :style="{ '--favorites-toggle-height': toggleHeight + 'px' }">
+    <div class="favorites-template-toggle" ref="toggle">
       <button
         type="button"
         class="favorite-type-btn"
@@ -147,58 +162,63 @@ export default {
         class="item-group"
       >
         <div class="group-header favorites-group-header">
-          <div class="group-header-top">
-            <div class="group-header-left">
-              <span class="group-name">{{ groupName }}</span>
-              <span class="group-count"
-                >{{ favoriteCartTemplatesByGroup[groupName].length }}
-                {{
-                  favoriteCartTemplatesByGroup[groupName].length <= 1
-                    ? 'saved item'
-                    : 'saved items'
-                }}</span
-              >
-            </div>
-            <div class="group-more-menu-wrapper">
+          <div class="group-header-left">
+            <span class="group-name">{{ groupName }}</span>
+            <button
+              class="nearby-store-btn"
+              @click.stop="nearbyShopName = groupName"
+              title="Find this store nearby"
+            >
+              <i class="material-icons">near_me</i>
+            </button>
+          </div>
+          <span class="group-count"
+            >{{ favoriteCartTemplatesByGroup[groupName].length }}
+            {{
+              favoriteCartTemplatesByGroup[groupName].length <= 1
+                ? 'saved item'
+                : 'saved items'
+            }}</span
+          >
+          <div class="group-more-menu-wrapper">
+            <button
+              type="button"
+              class="group-more-btn"
+              @click.stop="
+                openGroupMenu = openGroupMenu === groupName ? null : groupName
+              "
+              title="More actions"
+            >
+              <i class="material-icons">more_vert</i>
+            </button>
+            <div
+              v-if="openGroupMenu === groupName"
+              class="group-more-backdrop"
+              @click.stop="openGroupMenu = null"
+            ></div>
+            <div v-if="openGroupMenu === groupName" class="group-more-dropdown">
               <button
                 type="button"
-                class="group-more-btn"
+                class="group-more-option"
                 @click.stop="
-                  openGroupMenu = openGroupMenu === groupName ? null : groupName
+                  openGroupMenu = null;
+                  $emit('download-group-pdf', groupName)
                 "
-                title="More actions"
               >
-                <i class="material-icons">more_vert</i>
+                <i class="material-icons">picture_as_pdf</i>
+                Download list
               </button>
-              <div
-                v-if="openGroupMenu === groupName"
-                class="group-more-backdrop"
-                @click.stop="openGroupMenu = null"
-              ></div>
-              <div v-if="openGroupMenu === groupName" class="group-more-dropdown">
-                <button
-                  type="button"
-                  class="group-more-option"
-                  @click.stop="
-                    openGroupMenu = null;
-                    $emit('download-group-pdf', groupName)
-                  "
-                >
-                  <i class="material-icons">picture_as_pdf</i>
-                  Download list
-                </button>
-                <button
-                  type="button"
-                  class="group-more-option danger"
-                  @click.stop="
-                    openGroupMenu = null;
-                    $emit('delete-favorite-group', groupName)
-                  "
-                >
-                  <i class="material-icons">delete</i>
-                  Delete shop
-                </button>
-              </div>
+              <button
+                type="button"
+                class="group-more-option danger"
+                @click.stop="
+                  openGroupMenu = null;
+                  $emit('delete-favorite-group', groupName)
+                "
+              >
+                <i class="material-icons">delete</i>
+                Delete shop
+              </button>
             </div>
           </div>
         </div>
@@ -323,10 +343,6 @@ export default {
       </p>
     </div>
 
-    <p v-if="savedCount === 0 && !savedPlaces.length" class="empty-state">
-      No saved templates yet. Save from Cart or Recipes to create templates.
-    </p>
-
     <!-- Map picker for saved places -->
     <div
       v-if="selectedPlace"
@@ -352,6 +368,11 @@ export default {
         </button>
       </div>
     </div>
+
+    <NearbyStoresModal
+      :shop-name="nearbyShopName"
+      @close="nearbyShopName = ''"
+    />
   </div>
 </template>
 
@@ -368,10 +389,11 @@ export default {
   display: flow;
   align-items: center;
   text-align: center;
+  margin-bottom: spacing.$spacing-s;
 
   .material-icons {
-    color: color.$danger;
-    @include typography.headline-120;
+    color: color.$blue-violet;
+    @include typography.headline-160;
     align-self: center;
   }
 
@@ -412,34 +434,30 @@ export default {
   }
 
   &.active {
-    background: color.$gold;
+    background: color.$blue-violet;
     color: color.$white;
   }
 }
 
 .item-group {
-  padding: spacing.$spacing-s spacing.$spacing-base;
   margin-bottom: spacing.$spacing-s;
+  padding-bottom: spacing.$spacing-s;
   border-bottom: size.$sp02 solid color.$border-dark;
 }
 
 .group-header {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: spacing.$spacing-xxs;
+  padding: spacing.$spacing-xxs spacing.$spacing-base;
   background: color.$gradient;
   border-radius: size.$sp06;
   margin-bottom: spacing.$spacing-xxs;
-
-  .group-header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    gap: spacing.$spacing-xxs;
-  }
+  position: sticky;
+  // Toolbar sticks at top: -10px, so match that offset to avoid a gap below it.
+  top: calc(var(--favorites-toggle-height, 0px) - 10px);
+  z-index: 7;
 
   .group-header-left {
     display: flex;
@@ -457,15 +475,10 @@ export default {
   .group-count {
     @include typography.headline-120;
     color: rgba(color.$light, 0.8);
-  }
-
-  .group-more-menu-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
     flex-shrink: 0;
   }
 
+  .nearby-store-btn,
   .group-more-btn {
     background: none;
     border: none;
@@ -473,6 +486,7 @@ export default {
     color: rgba(color.$light, 0.8);
     display: flex;
     align-items: center;
+    gap: spacing.$spacing-xxs;
     padding: 0;
     transition: color 0.15s;
 
@@ -483,6 +497,13 @@ export default {
     &:hover {
       color: color.$light;
     }
+  }
+
+  .group-more-menu-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
   }
 
   .group-more-backdrop {
@@ -516,15 +537,11 @@ export default {
     color: color.$dark;
     cursor: pointer;
     white-space: nowrap;
-    @include typography.headline-120-medium;
+    @include typography.headline-160-medium;
 
     .material-icons {
-      @include typography.headline-160;
+      @include typography.headline-200;
       color: color.$dark50;
-    }
-
-    &:hover {
-      background: color.$light-bg-soft;
     }
 
     &.danger {
@@ -538,6 +555,7 @@ export default {
 
 .favorites-group-header {
   cursor: default;
+  padding: spacing.$spacing-xs;
 
   &:active {
     cursor: default;
@@ -548,16 +566,12 @@ export default {
   display: flex;
   align-items: center;
   width: 100%;
+  padding: 0 spacing.$spacing-base;
+
 
   :deep(.cart-items) {
     flex: 1;
     margin-top: spacing.$spacing-xxs;
-    flex-direction: column;
-    padding: 0 spacing.$spacing-xxs;
-  }
-  :deep(.cart-item) {
-    flex-direction: column;
-    margin: inherit;
   }
 }
 
@@ -582,31 +596,32 @@ export default {
 
 .remove-template-btn {
   position: absolute;
-  top: spacing.$spacing-xxs;
-  right: spacing.$spacing-xxs;
+  top: spacing.$spacing-xs;
+  right: spacing.$spacing-xs;
   z-index: 2;
   width: size.$sp36;
   height: size.$sp36;
   border: none;
   border-radius: 50%;
-  padding: 0;
+  padding: spacing.$spacing-xs;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  background: rgba(color.$dark-deep, 0.55);
+  background: color.$blue-violet;
   color: color.$white;
   transition:
     background 0.15s,
     color 0.15s;
 
   .material-icons {
-    @include typography.headline-160;
+    @include typography.headline-240;
+    padding: spacing.$spacing-xxs;
   }
 
   &:hover {
-    background: color.$danger;
     color: color.$white;
+    background: rgba(color.$blue-violet, 0.55);
   }
 }
 
@@ -622,19 +637,18 @@ export default {
   padding: spacing.$spacing-xxs spacing.$spacing-base;
   background: color.$gradient;
   color: color.$light;
-  @include typography.headline-120-medium;
+  @include typography.headline-180-medium;
   border-radius: size.$sp08;
-  margin-top: spacing.$spacing-xxs;
 
   .material-icons {
-    @include typography.headline-160;
+    @include typography.headline-180;
   }
 }
 
 .saved-place-row {
   display: flex;
   align-items: center;
-  gap: spacing.$spacing-xxs;
+  gap: spacing.$spacing-xs;
   padding: spacing.$spacing-xxs spacing.$spacing-base;
   border-bottom: size.$sp01 solid color.$border-light;
   cursor: pointer;
@@ -652,14 +666,14 @@ export default {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: size.$sp12;
+  gap: size.$sp20;
+  padding: spacing.$spacing-xxs spacing.$spacing-base;
   flex-shrink: 0;
 }
 
 .saved-place-open-icon {
-  @include typography.headline-240;
   color: color.$blue-violet;
-  opacity: 0.7;
+  @include typography.headline-240;
 }
 
 .saved-place-icon {
@@ -673,7 +687,7 @@ export default {
   flex-shrink: 0;
 
   .material-icons {
-    @include typography.headline-160;
+    @include typography.headline-240;
     color: color.$blue-violet;
   }
 }
@@ -716,7 +730,8 @@ export default {
   }
 
   .material-icons {
-    @include typography.headline-200;
+    color: color.$blue-violet;
+    @include typography.headline-240;
   }
 }
 
@@ -791,7 +806,7 @@ export default {
     color: color.$white;
   }
   &.apple-btn {
-    background: color.$dark;
+    background: color.$gold;
     color: color.$white;
   }
 }
@@ -860,11 +875,63 @@ html.dark .food-meta {
 }
 
 html.dark .remove-template-btn {
-  background: rgba(color.$danger-light, 0.2);
+  background: color.$gold;
   color: color.$light;
+
+  &:hover {
+    background: rgba(color.$gold, 0.55);
+  }
 }
 
 html.dark .favorites-template-toggle {
   background: color.$dark;
+}
+
+html.dark .saved-place-open-icon {
+  color: color.$gold;
+}
+
+html.dark .saved-place-icon {
+  background-color: rgba(color.$gold, 0.1);
+  .material-icons {
+    color: color.$gold;
+  }
+}
+
+html.dark .saved-place-name {
+  color: color.$white;
+}
+
+html.dark .group-more-dropdown {
+    background-color: color.$dark;
+    color: color.$light;
+    border: size.$sp02 solid color.$light50;
+    box-shadow: 0 size.$sp04 size.$sp12 rgba(color.$light, 0.25);
+  }
+
+html.dark .group-more-option {
+    background-color: color.$dark;
+    color: color.$white;
+
+     .material-icons {
+         color: color.$white;
+    }
+  }
+
+
+html.dark .favorite-info-hint {
+  .material-icons {
+    color: color.$gold;
+  }
+}
+
+html.dark .delete-place-btn {
+  &:hover {
+    color: color.$gold;
+  }
+
+  .material-icons {
+    color: color.$gold;
+  }
 }
 </style>

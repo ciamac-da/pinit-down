@@ -1,4 +1,6 @@
 <script>
+import { useSubscriptionStore } from '@/stores/SubscriptionStore';
+
 export default {
   props: {
     recipe: {
@@ -11,6 +13,19 @@ export default {
     },
   },
   emits: ['open-details', 'save-recipe', 'download-recipe'],
+  setup() {
+    const subscriptionStore = useSubscriptionStore();
+    return { subscriptionStore };
+  },
+  methods: {
+    handleDownload() {
+      if (!this.subscriptionStore.effectiveIsPro) {
+        this.subscriptionStore.openPaywall('recipe-download');
+        return;
+      }
+      this.$emit('download-recipe', this.recipe);
+    },
+  },
 };
 </script>
 
@@ -57,9 +72,11 @@ export default {
         <button
           type="button"
           class="recipe-card-download"
-          @click.stop="$emit('download-recipe', recipe)"
+          @click.stop="handleDownload"
         >
-          <i class="material-icons">picture_as_pdf</i>
+          <i class="material-icons">{{
+            subscriptionStore.effectiveIsPro ? 'picture_as_pdf' : 'lock'
+          }}</i>
           Download
         </button>
       </div>
@@ -173,7 +190,7 @@ export default {
   width: 100%;
   border: none;
   border-radius: size.$sp08;
-  padding: spacing.$spacing-base spacing.$spacing-xxs;
+  padding: spacing.$spacing-xxs;
   cursor: pointer;
   @include typography.headline-120-medium;
 
@@ -188,35 +205,35 @@ export default {
 }
 
 .recipe-card-save {
-  background: rgba(color.$gold, 0.2);
-  color: color.$dark;
+  background: color.$blue-violet;
+  color: color.$white;
 }
 
-:global(.dark) .recipe-card {
+html.dark .recipe-card {
   background: color.$dark-medium;
   border-color: rgba(color.$light, 0.12);
 }
-
-:global(.dark) .recipe-card-body h3 {
+  
+html.dark .recipe-card-body h3 {
   color: color.$light;
 }
 
-:global(.dark) .recipe-card-body p {
+html.dark .recipe-card-body p {
   color: color.$light50;
 }
 
-:global(.dark) .recipe-card-download {
-  background: rgba(color.$danger-light, 0.18);
+html.dark .recipe-card-download {
+  background: color.$danger;
   color: color.$light;
 }
 
-:global(.dark) .recipe-card-eye {
+html.dark .recipe-card-eye {
   background: rgba(color.$light, 0.12);
   color: color.$light;
 }
 
-:global(.dark) .recipe-card-save {
-  background: rgba(color.$gold, 0.3);
+html.dark .recipe-card-save {
+  background: color.$gold;
   color: color.$white;
 }
 </style>

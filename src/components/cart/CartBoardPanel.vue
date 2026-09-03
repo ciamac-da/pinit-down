@@ -46,14 +46,6 @@ export default {
       type: [String, Number, null],
       default: null,
     },
-    draggedGroup: {
-      type: [String, null],
-      default: null,
-    },
-    dragOverGroup: {
-      type: [String, null],
-      default: null,
-    },
     editingGroup: {
       type: [String, null],
       default: null,
@@ -65,11 +57,8 @@ export default {
   },
   emits: [
     'download-cart-pdf',
-    'group-drag-start',
-    'group-drag-over',
     'group-drag-leave',
     'set-drag-over-group',
-    'group-drop',
     'drop-on-group',
     'drag-end',
     'update-edit-group-name',
@@ -96,17 +85,7 @@ export default {
     updateToolbarHeight() {
       this.toolbarHeight = this.$refs.toolbar?.offsetHeight ?? 0;
     },
-    onGroupDragStart(event, groupName) {
-      const groupEl = event.currentTarget.closest('.item-group');
-      if (groupEl && event.dataTransfer) {
-        // Use the whole group block (header + items) as the drag ghost.
-        event.dataTransfer.setDragImage(groupEl, event.offsetX, event.offsetY);
-      }
-      this.$emit('group-drag-start', groupName);
-    },
     onGroupHeaderDragOver(groupName) {
-      if (this.draggedGroup) return;
-
       if (this.draggedId) {
         this.$emit('set-drag-over-group', groupName);
       }
@@ -116,36 +95,17 @@ export default {
       this.$emit('set-drag-over-group', null);
     },
     onGroupHeaderDrop(groupName) {
-      if (this.draggedGroup) return;
-
       this.$emit('drop-on-group', groupName);
     },
     onRowDragOver(item, groupName) {
-      if (this.draggedGroup) return;
-
       if (this.draggedId) {
         this.$emit('drag-over', item);
       }
     },
     onRowDrop(item, groupName) {
-      if (this.draggedGroup) return;
-
       if (this.draggedId) {
         this.$emit('drop-item', item, groupName);
       }
-    },
-    onGroupContainerDragOver(event, groupName) {
-      if (!this.draggedGroup || this.draggedGroup === groupName) return;
-      this.$emit('group-drag-over', groupName);
-    },
-    onGroupContainerDrop(event, groupName) {
-      if (!this.draggedGroup || this.draggedGroup === groupName) return;
-      // Use the whole group block's midpoint so hovering its last item still resolves correctly.
-      this.$emit('group-drop', groupName, this.getDropPosition(event));
-    },
-    getDropPosition(event) {
-      const rect = event.currentTarget.getBoundingClientRect();
-      return event.clientY - rect.top > rect.height / 2 ? 'after' : 'before';
     },
     onEditGroupNameInput(event) {
       this.$emit('update-edit-group-name', event.target.value);
@@ -175,26 +135,14 @@ export default {
         v-for="(groupName, groupIndex) in groups"
         :key="groupName"
         class="item-group"
-        :class="{
-          'group-drag-over': dragOverGroup === groupName,
-          'dragging-group': draggedGroup === groupName,
-        }"
-        @dragover.prevent="onGroupContainerDragOver($event, groupName)"
-        @drop.prevent="onGroupContainerDrop($event, groupName)"
       >
         <div
           class="group-header"
-          :draggable="!isTouchDevice"
-          @dragstart.stop="onGroupDragStart($event, groupName)"
           @dragover.prevent="onGroupHeaderDragOver(groupName)"
           @dragleave="onGroupHeaderDragLeave"
           @drop.prevent="onGroupHeaderDrop(groupName)"
-          @dragend="$emit('drag-end')"
         >
           <div class="group-header-top">
-            <span class="drag-handle group-drag-handle material-icons"
-              >drag_indicator</span
-            >
             <template v-if="editingGroup === groupName">
               <input
                 :value="editGroupName"
@@ -307,7 +255,6 @@ export default {
           :class="{
             'drag-over': dragOverId === item._id,
             dragging: draggedId === item._id,
-            'group-item-dragging': draggedGroup === groupName,
           }"
           @dragstart.stop="$emit('drag-start', item)"
           @dragover.prevent="onRowDragOver(item, groupName)"
@@ -315,7 +262,6 @@ export default {
           @drop.prevent="onRowDrop(item, groupName)"
           @dragend="$emit('drag-end')"
         >
-          <span class="drag-handle material-icons">drag_indicator</span>
           <CartItemDetails
             :cart-item="item"
             :index="idx"
@@ -333,15 +279,7 @@ export default {
         </button>
       </div>
 
-      <div
-        v-if="draggedGroup"
-        class="group-end-dropzone"
-        :class="{ 'group-drag-over': dragOverGroup === '__group_end__' }"
-        @dragover.prevent="$emit('group-drag-over', '__group_end__')"
-        @drop.prevent="$emit('group-drop', '__group_end__')"
-      >
-        Drop here to move to end
-      </div>
+
 
       <p v-if="totalCount === 0" class="empty-state">
         No items yet. Add your first item above!
@@ -378,7 +316,11 @@ export default {
   top: 0;
   z-index: 8;
   background: color.$light;
-  padding: spacing.$spacing-m 0 spacing.$spacing-base 0;
+  padding: spacing.$spacing-l * 1.2 0 spacing.$spacing-xxs 0;
+  display: inline-flex;
+  flex-direction: column;
+  width: 100%;
+  gap: spacing.$spacing-xs;
 
   @include breakpoint.media-breakpoint-up(sm) {
     padding: spacing.$spacing-xs 0 spacing.$spacing-base 0;
@@ -387,7 +329,7 @@ export default {
 
 .download-collection-btn {
   align-self: center;
-  margin: spacing.$spacing-xxs 0 spacing.$spacing-xs 0;
+  margin-bottom: spacing.$spacing-xs;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -397,7 +339,7 @@ export default {
   border-radius: size.$sp10;
   background: rgba(color.$danger, 0.12);
   color: color.$danger-dark;
-  padding: spacing.$spacing-xxs spacing.$spacing-m;
+  padding: spacing.$spacing-xs spacing.$spacing-m;
   cursor: pointer;
   @include typography.headline-120-medium;
 
@@ -418,6 +360,11 @@ export default {
   border-bottom: size.$sp02 solid color.$border-dark;
 }
 
+.item-group:first-of-type {
+  border-top: size.$sp02 solid color.$border-dark;
+  padding-top: spacing.$spacing-s;
+}
+
 .item-group:last-of-type {
   border-bottom: none;
 }
@@ -431,7 +378,6 @@ export default {
   padding: spacing.$spacing-base;
   background: color.$gradient;
   border-radius: size.$sp10;
-  cursor: grab;
   position: sticky;
   top: var(--group-sticky-top, 0px);
   z-index: 7;
@@ -439,20 +385,10 @@ export default {
     outline 0.15s,
     background 0.15s;
 
-  &:active {
-    cursor: grabbing;
-  }
-
   .group-header-top {
     display: flex;
     align-items: center;
     gap: spacing.$spacing-xxs;
-  }
-
-  .group-drag-handle {
-    color: rgba(color.$light, 0.6);
-    @include typography.headline-200;
-    user-select: none;
   }
 
   .group-name {
@@ -513,6 +449,7 @@ export default {
   .group-header-bottom {
     display: flex;
     align-items: center;
+    padding: spacing.$spacing-xxs 0;
     justify-content: space-around;
     width: 100%;
     gap: spacing.$spacing-xxs;
@@ -567,7 +504,7 @@ export default {
     display: flex;
     flex-direction: column;
     padding: spacing.$spacing-xxs spacing.$spacing-xs;
-    gap: spacing.$spacing-xxs;
+    gap: spacing.$spacing-xs;
     background: color.$white;
     border-radius: size.$sp10;
     box-shadow: size.$sp02 size.$sp04 size.$sp24 color.$dark;
@@ -585,15 +522,11 @@ export default {
     color: color.$dark;
     cursor: pointer;
     white-space: nowrap;
-    @include typography.headline-120-medium;
+    @include typography.headline-160-medium;
 
     .material-icons {
-      @include typography.headline-160;
+      @include typography.headline-200;
       color: color.$dark50;
-    }
-
-    &:hover {
-      background: color.$light-bg-soft;
     }
 
     &:disabled {
@@ -615,35 +548,6 @@ export default {
   }
 }
 
-.item-group.group-drag-over {
-  outline: size.$sp02 dashed color.$blue-violet;
-  outline-offset: size.$sp04;
-  border-radius: size.$sp06;
-}
-
-.item-group.dragging-group {
-  opacity: 0.4;
-  outline: size.$sp02 dashed color.$blue-violet;
-  outline-offset: size.$sp04;
-  border-radius: size.$sp06;
-}
-
-.group-end-dropzone {
-  margin: 0 spacing.$spacing-base spacing.$spacing-s;
-  padding: spacing.$spacing-xs;
-  border: size.$sp02 dashed color.$muted-lightest;
-  border-radius: size.$sp06;
-  text-align: center;
-  color: color.$muted-lighter;
-  @include typography.headline-120;
-
-  &.group-drag-over {
-    border-color: color.$blue-violet;
-    color: color.$blue-violet;
-    background: rgba(color.$blue-violet, 0.06);
-  }
-}
-
 .add-item-end-btn {
   display: flex;
   align-items: center;
@@ -657,11 +561,11 @@ export default {
   background: none;
   color: color.$muted;
   cursor: pointer;
-  @include typography.headline-120-medium;
+  @include typography.headline-160-medium;
 
   .material-icons {
     color: color.$blue-violet;
-    @include typography.headline-160;
+    @include typography.headline-200;
   }
 
   &:hover {
@@ -699,11 +603,6 @@ export default {
     background: rgba(color.$blue-violet, 0.08);
     outline: size.$sp02 dashed color.$blue-violet;
   }
-
-  &.group-item-dragging {
-    opacity: 0.5;
-    background: rgba(color.$blue-violet, 0.08);
-  }
 }
 
 .drag-handle {
@@ -735,7 +634,7 @@ html.dark .cart-board-toolbar {
 }
 
 html.dark .download-collection-btn {
-  background: color.$blue-violet;
+  background: color.$danger;
   color: color.$light;
 }
 
@@ -743,4 +642,23 @@ html.dark .item-group {
   border-color: rgba(color.$white, 0.5);
   box-shadow: 0 size.$sp04 size.$sp12 rgba(color.$white, 0.25);
 }
+
+html.dark .add-item-end-btn .material-icons {
+  color: color.$gold;
+}
+
+html.dark .group-more-dropdown {
+    background-color: color.$dark;
+    color: color.$light;
+  }
+
+
+html.dark .group-more-option {
+    background-color: color.$dark;
+    color: color.$white;
+
+     .material-icons {
+         color: color.$white;
+    }
+  }
 </style>

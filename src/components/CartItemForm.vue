@@ -124,6 +124,8 @@ export default {
       }
 
       const resolvedGroupName = cartStore.addCustomGroup(groupName);
+      if (!resolvedGroupName) return;
+
       selectedGroup.value = resolvedGroupName;
       creatingGroup.value = false;
       newGroupName.value = '';
@@ -431,11 +433,11 @@ export default {
   justify-content: center;
   gap: size.$sp06;
   align-self: flex-start;
-  background: color.$gold;
+  background: color.$blue-violet;
   color: color.$light;
   border: none;
   border-radius: size.$sp08;
-  padding: spacing.$spacing-xxs spacing.$spacing-m;
+  padding: spacing.$spacing-xs spacing.$spacing-m;
   cursor: pointer;
   width: 100%;
   @include typography.headline-140-medium;
@@ -738,28 +740,32 @@ export default {
   }
 }
 
-:global(.dark) .submit-form input {
+html.dark .submit-form input {
   background-color: color.$dark50;
   color: color.$light;
 }
 
-:global(.dark) .submit-form input::placeholder {
+html.dark .submit-form input::placeholder {
   color: color.$light;
 }
 
-:global(.dark) .form-panel {
+html.dark .form-panel {
   background: color.$dark-medium;
 }
 
-:global(.dark) .form-panel-header h3 {
+html.dark .form-panel-header h3 {
   color: color.$light;
 }
 
-:global(.dark) .modal-close-btn {
+html.dark .modal-close-btn {
   color: color.$light50;
 }
 
-:global(.dark) .modal-close-btn:hover {
+html.dark .modal-close-btn:hover {
   color: color.$light;
+}
+
+html.dark .toggle-add-btn {
+  background-color: color.$gold;
 }
 </style>

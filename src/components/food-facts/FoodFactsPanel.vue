@@ -258,7 +258,10 @@ export default {
           type="text"
           placeholder="Search food facts..."
         />
-        <button type="submit">Search</button>
+        <button type="submit">
+          <i class="material-icons">search</i>
+          Search
+        </button>
       </form>
 
       <p v-if="datasetLoading" class="food-state">Loading local dataset...</p>
@@ -289,16 +292,8 @@ export default {
     </div>
 
     <div v-if="searchResults.length > 0" class="food-pagination food-pagination-top">
-      <span class="page-size-control">Per page</span>
       <div class="page-size-menu-wrapper">
-        <button
-          type="button"
-          class="page-size-btn"
-          @click="showPageSizeMenu = !showPageSizeMenu"
-        >
-          {{ pageSize }}
-          <i class="material-icons">arrow_drop_down</i>
-        </button>
+      
         <div
           v-if="showPageSizeMenu"
           class="page-size-backdrop"
@@ -321,6 +316,7 @@ export default {
       <button
         type="button"
         class="page-btn"
+        :class="{ 'page-btn-hidden': isAtFirstPage }"
         :disabled="isAtFirstPage"
         @click="previousPage"
       >
@@ -330,6 +326,7 @@ export default {
       <button
         type="button"
         class="page-btn"
+        :class="{ 'page-btn-hidden': isAtLastPage }"
         :disabled="isAtLastPage"
         @click="nextPage"
       >
@@ -474,21 +471,16 @@ export default {
   }
 }
 
-html.dark .food-facts-toolbar {
-  background: color.$dark;
-  h2 {
-    color: color.$white;
-  }
-}
-
 .food-search-form {
   display: flex;
-  gap: spacing.$spacing-xxs;
+  gap: spacing.$spacing-xs;
+  flex-direction: column;
 
   input {
     width: 100%;
     border: size.$sp02 solid rgba(color.$blue-violet, 0.25);
     border-radius: size.$sp08;
+    text-align: center;
     padding: spacing.$spacing-xs;
     @include typography.headline-140;
     background: color.$white;
@@ -497,11 +489,15 @@ html.dark .food-facts-toolbar {
   button {
     border: none;
     border-radius: size.$sp08;
-    background: color.$gradient;
+    background: color.$blue-violet;
     color: color.$white;
     padding: spacing.$spacing-xs spacing.$spacing-s;
     cursor: pointer;
     @include typography.headline-140;
+  }
+
+   @include breakpoint.media-breakpoint-up(sm) {
+    flex-direction: row;
   }
 }
 
@@ -520,13 +516,12 @@ html.dark .food-facts-toolbar {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: spacing.$spacing-xs;
-  // Clears the fixed app footer so the last row of cards isn't hidden behind it.
   margin-bottom: spacing.$spacing-3-xl;
 }
 
 .food-letter-filter {
   display: flex;
-  gap: spacing.$spacing-base;
+  gap: spacing.$spacing-xxs;
   overflow-x: auto;
   padding: spacing.$spacing-xs;
 }
@@ -538,7 +533,7 @@ html.dark .food-facts-toolbar {
   flex: 0 0 auto;
   min-width: size.$sp40;
   border-radius: size.$sp10;
-  padding: spacing.$spacing-base spacing.$spacing-xxs;
+  padding: spacing.$spacing-xxs;
   background: color.$light-bg;
   color: color.$dark;
 
@@ -553,7 +548,7 @@ html.dark .food-facts-toolbar {
   margin-bottom: spacing.$spacing-xs;
   display: flex;
   flex-wrap: wrap;
-  gap: spacing.$spacing-base;
+  gap: spacing.$spacing-xs;
   align-items: center;
 
   .page-btn {
@@ -656,15 +651,15 @@ html.dark .food-pagination-top {
   background: none;
   border: none;
   border-radius: size.$sp08;
-  padding: size.$sp04;
+  padding: spacing.$spacing-xxs spacing.$spacing-xs;
   cursor: pointer;
   display: flex;
-  color: color.$blue-violet;
+  color: color.$muted;
   transition: background 0.15s;
-  @include typography.headline-160;
+  @include typography.headline-240;
 
   &:hover:not(:disabled) {
-    background: rgba(color.$blue-violet, 0.1);
+    background: rgba(color.$muted, 0.1);
   }
 
   &:disabled {
@@ -673,14 +668,19 @@ html.dark .food-pagination-top {
   }
 
   .material-icons {
-    @include typography.headline-160;
+      color: color.$muted;
+    @include typography.headline-240;
   }
+}
+
+.page-btn-hidden {
+  visibility: hidden;
 }
 
 .page-info {
   @include typography.headline-160-medium;
   color: color.$muted;
-  min-width: 40px;
+  min-width: size.$sp40;
   text-align: center;
 }
 
@@ -743,7 +743,7 @@ html.dark .page-btn {
 .food-save-icon {
   flex-shrink: 0;
   cursor: pointer;
-  color: color.$blue-violet;
+  color: color.$muted;
   @include typography.headline-180;
   transition: color 0.15s;
 
@@ -752,7 +752,7 @@ html.dark .page-btn {
   }
 
   &.saved {
-    color: color.$muted-lighter;
+  color: color.$blue-violet;
     cursor: default;
   }
 }
@@ -812,14 +812,14 @@ html.dark .page-btn {
   height: size.$sp32;
   border-radius: 50%;
   cursor: pointer;
-  background: rgba(color.$danger, 0.12);
-  color: color.$danger-dark;
+  background: rgba(color.$blue-violet, 0.12);
+  color: color.$blue-violet;
   transition:
     background 0.15s,
     color 0.15s;
 
   &:hover {
-    background: color.$danger;
+    background: color.$blue-violet;
     color: color.$white;
   }
 }
@@ -847,9 +847,9 @@ html.dark .page-btn {
   }
 }
 
-:global(.dark) {
+html.dark {
   .food-facts-toolbar {
-    background: color.$dark-deep;
+    background: color.$dark;
 
     h2 {
       color: color.$light;
@@ -923,14 +923,39 @@ html.dark .page-size-control {
   color: color.$white;
 }
 
-@media (max-width: 767px) {
-  .food-search-form {
-    flex-direction: column;
-  }
-
+@include breakpoint.media-breakpoint-down(md) {
   .food-results-grid,
   .nutrient-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+html.dark .food-search-form {
+  input {
+    border: size.$sp02 solid rgba(color.$white, 0.25);
+    background: color.$dark;
+  }
+
+  button {
+    background: color.$gold;
+    color: color.$white;
+  }
+}
+
+html.dark .food-save-icon {
+  color: color.$muted !important;
+
+  &.saved {
+    color: color.$gold !important;
+  }
+}
+
+html.dark .food-close-icon {
+  background: rgba(color.$gold, 0.12);
+  color: color.$gold;
+  &:hover {
+    background: color.$gold;
+    color: color.$white;
   }
 }
 </style>

@@ -209,6 +209,13 @@ export default {
         @click.self="selectedStore = null"
       >
         <div class="map-picker">
+          <button
+            type="button"
+            class="map-picker-close"
+            @click="selectedStore = null"
+          >
+            <i class="material-icons">close</i>
+          </button>
           <p class="map-picker-label">Open in maps</p>
           <p class="map-picker-store">{{ selectedStore.name }}</p>
           <div class="map-picker-buttons">
@@ -221,9 +228,6 @@ export default {
               Apple Maps
             </button>
           </div>
-          <button class="map-picker-cancel" @click="selectedStore = null">
-            Cancel
-          </button>
         </div>
       </div>
 
@@ -275,7 +279,7 @@ export default {
   display: flex;
   align-items: center;
   gap: spacing.$spacing-xxs;
-  padding: spacing.$spacing-s spacing.$spacing-s spacing.$spacing-xxs;
+  padding: spacing.$spacing-s spacing.$spacing-xs;
   background: color.$gradient;
   color: color.$light;
 
@@ -305,7 +309,7 @@ export default {
     }
 
     .material-icons {
-      @include typography.headline-200;
+      @include typography.headline-280;
     }
   }
 }
@@ -351,7 +355,7 @@ export default {
   align-items: center;
   justify-content: space-between;
   gap: spacing.$spacing-xxs;
-  padding: spacing.$spacing-xxs spacing.$spacing-s;
+  padding: spacing.$spacing-s;
   cursor: pointer;
   border-bottom: size.$sp01 solid color.$border-light;
   transition: background 0.15s;
@@ -402,7 +406,7 @@ export default {
 }
 
 .nearby-open-icon {
-  @include typography.headline-160;
+  @include typography.headline-240;
   color: color.$muted-lighter;
 }
 
@@ -417,6 +421,7 @@ export default {
 }
 
 .map-picker {
+  position: relative;
   width: 100%;
   background: color.$white;
   padding: spacing.$spacing-s;
@@ -424,6 +429,26 @@ export default {
   flex-direction: column;
   gap: spacing.$spacing-xxs;
   border-top: size.$sp02 solid color.$border-light;
+}
+
+.map-picker-close {
+  position: absolute;
+  top: spacing.$spacing-xxs;
+  right: spacing.$spacing-xxs;
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: color.$muted;
+  display: flex;
+  padding: spacing.$spacing-xxs;
+
+  .material-icons {
+    @include typography.headline-280;
+  }
+
+  &:hover {
+    color: color.$dark;
+  }
 }
 
 .map-picker-label {
@@ -434,7 +459,7 @@ export default {
 }
 
 .map-picker-store {
-  @include typography.headline-140-medium;
+  @include typography.headline-280-medium;
   color: color.$dark;
   margin: 0;
   text-align: center;
@@ -473,22 +498,8 @@ export default {
   }
 
   &.apple-btn {
-    background: color.$dark;
+    background: color.$gold;
     color: color.$white;
-  }
-}
-
-.map-picker-cancel {
-  background: none;
-  border: none;
-  cursor: pointer;
-  @include typography.headline-240;
-  color: color.$muted;
-  text-align: center;
-  padding: spacing.$spacing-base 0 0;
-
-  &:hover {
-    color: color.$dark;
   }
 }
 
@@ -526,8 +537,8 @@ html.dark .map-picker-store {
   color: color.$light;
 }
 
-html.dark .map-picker-cancel {
-  color: color.$muted-lighter;
+html.dark .map-picker-close {
+  color: color.$light50;
   &:hover {
     color: color.$light;
   }
@@ -539,5 +550,18 @@ html.dark .nearby-item:hover {
 
 html.dark .nearby-item-name {
   color: color.$light;
+}
+
+
+html.dark .nearby-attribution {
+  color: color.$muted-lighter;
+
+  a {
+    color: color.$gold;
+  }
+}
+
+html.dark .nearby-dist {
+  color: color.$gold;
 }
 </style>

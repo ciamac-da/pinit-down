@@ -1,4 +1,6 @@
 <script>
+import { useSubscriptionStore } from '@/stores/SubscriptionStore';
+
 export default {
   props: {
     open: {
@@ -23,6 +25,26 @@ export default {
     },
   },
   emits: ['close', 'save-recipe', 'download-recipe', 'save-ingredient'],
+  setup() {
+    const subscriptionStore = useSubscriptionStore();
+    return { subscriptionStore };
+  },
+  computed: {
+    visibleRecipeLinks() {
+      if (this.subscriptionStore.effectiveIsPro) return this.recipeLinks;
+      // YouTube videos are a Pro-only perk; keep source website links free.
+      return this.recipeLinks.filter((link) => link.label !== 'YouTube');
+    },
+  },
+  methods: {
+    handleDownload() {
+      if (!this.subscriptionStore.effectiveIsPro) {
+        this.subscriptionStore.openPaywall('recipe-download');
+        return;
+      }
+      this.$emit('download-recipe', this.recipe);
+    },
+  },
 };
 </script>
 
@@ -68,14 +90,16 @@ export default {
             <button
               type="button"
               class="recipe-link-action"
-              @click="$emit('download-recipe', recipe)"
+              @click="handleDownload"
             >
-              <i class="material-icons">picture_as_pdf</i>
+              <i class="material-icons">{{
+                subscriptionStore.effectiveIsPro ? 'picture_as_pdf' : 'lock'
+              }}</i>
               Download recipe
             </button>
 
             <a
-              v-for="recipeLink in recipeLinks"
+              v-for="recipeLink in visibleRecipeLinks"
               :key="recipeLink.href"
               :href="recipeLink.href"
               target="_blank"
@@ -85,6 +109,16 @@ export default {
               <i class="material-icons">{{ recipeLink.icon }}</i>
               {{ recipeLink.label }}
             </a>
+
+            <button
+              v-if="!subscriptionStore.effectiveIsPro && recipeLinks.some((link) => link.label === 'YouTube')"
+              type="button"
+              class="recipe-link-action"
+              @click="subscriptionStore.openPaywall('recipe-youtube')"
+            >
+              <i class="material-icons">lock</i>
+              YouTube
+            </button>
           </div>
 
           <div class="recipe-ingredients-section">
@@ -178,7 +212,7 @@ export default {
   display: block;
   width: 100%;
   max-height: calc(size.$sp32 * 10);
-  object-fit: cover;
+  object-fit: unset;
   background: color.$light-bg-soft;
 }
 
@@ -234,7 +268,7 @@ export default {
 }
 
 .recipe-primary-action {
-  background: color.$gold;
+  background: color.$blue-violet;
   color: color.$white;
 }
 
@@ -326,31 +360,35 @@ export default {
   }
 }
 
-:global(.dark) .recipe-modal {
+html.dark .recipe-modal {
   background: color.$dark-medium;
 }
 
-:global(.dark) .recipe-link-action,
-:global(.dark) .recipe-ingredient-add {
+html.dark .recipe-link-action,
+html.dark .recipe-ingredient-add {
   background: rgba(color.$light, 0.12);
   color: color.$light;
 }
 
-:global(.dark) .recipe-ingredients-list li {
+html.dark .recipe-ingredients-list li {
   border-color: rgba(color.$light, 0.12);
 }
 
-:global(.dark) .recipe-modal-content h2,
-:global(.dark) .recipe-ingredients-section h3,
-:global(.dark) .recipe-instructions-section h3,
-:global(.dark) .recipe-ingredients-list strong,
-:global(.dark) .recipe-ingredient-copy strong {
+html.dark .recipe-modal-content h2,
+html.dark .recipe-ingredients-section h3,
+html.dark .recipe-instructions-section h3,
+html.dark .recipe-ingredients-list strong,
+html.dark .recipe-ingredient-copy strong {
   color: color.$light;
 }
 
-:global(.dark) .recipe-modal-meta,
-:global(.dark) .recipe-instructions-section p,
-:global(.dark) .recipe-ingredients-list li {
+html.dark .recipe-modal-meta,
+html.dark .recipe-instructions-section p,
+html.dark .recipe-ingredients-list li {
   color: color.$light50;
+}
+
+html.dark .recipe-primary-action {
+  background: color.$gold;
 }
 </style>

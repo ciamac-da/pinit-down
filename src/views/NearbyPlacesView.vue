@@ -1,5 +1,6 @@
 <script>
 import { useCartStore } from '@/stores/CartStore';
+import { useSubscriptionStore, FREE_LIMITS } from '@/stores/SubscriptionStore';
 
 const CATEGORIES = [
   {
@@ -73,7 +74,8 @@ const CATEGORIES = [
 export default {
   setup() {
     const cartStore = useCartStore();
-    return { cartStore };
+    const subscriptionStore = useSubscriptionStore();
+    return { cartStore, subscriptionStore };
   },
   data() {
     return {
@@ -83,21 +85,25 @@ export default {
       loading: false,
       error: '',
       results: [],
-      radius: 2,
+      radius: FREE_LIMITS.radiusKm,
       viewMode: 'list',
       selectedPlace: null,
       page: 1,
       pageSize: 7,
       resultsHeight: null,
+      showRadiusMenu: false,
     };
   },
   computed: {
     totalPages() {
-      return Math.ceil(this.results.length / this.pageSize);
+      return Math.ceil(this.results.length / this.effectivePageSize);
+    },
+    effectivePageSize() {
+      return this.viewMode === 'cards' ? 4 : this.pageSize;
     },
     pagedResults() {
-      const start = (this.page - 1) * this.pageSize;
-      return this.results.slice(start, start + this.pageSize);
+      const start = (this.page - 1) * this.effectivePageSize;
+      return this.results.slice(start, start + this.effectivePageSize);
     },
   },
   watch: {
@@ -111,6 +117,7 @@ export default {
       this.$nextTick(() => this.updateLayout());
     },
     viewMode() {
+      this.page = 1;
       this.$nextTick(() => this.updateLayout());
     },
   },
@@ -122,6 +129,26 @@ export default {
     window.removeEventListener('resize', this._onResize);
   },
   methods: {
+    saveNearbyPlace(place) {
+      if (this.cartStore.isPlaceSaved(place.lat, place.lon)) {
+        this.cartStore.showToast('This place is already saved.', 'info');
+        return;
+      }
+      this.cartStore.savePlace({
+        ...place,
+        icon: this.selectedItem ? this.selectedItem.icon : 'place',
+        subcategory: this.selectedItem ? this.selectedItem.label : '',
+        category: this.selectedCategory ? this.selectedCategory.label : '',
+      });
+    },
+    selectRadius(r) {
+      this.showRadiusMenu = false;
+      if (r > FREE_LIMITS.radiusKm && !this.subscriptionStore.effectiveIsPro) {
+        this.subscriptionStore.openPaywall('nearby-radius');
+        return;
+      }
+      this.radius = r;
+    },
     updateLayout() {
       const toolbar = this.$refs.toolbar;
       if (!toolbar) return;
@@ -340,16 +367,39 @@ export default {
       </div>
       <div v-if="selectedItem" class="radius-row">
         <label>Radius:</label>
-        <div class="radius-chips">
+        <div class="radius-dropdown">
           <button
-            v-for="r in [0.5, 1, 2, 5, 10, 50]"
-            :key="r"
-            class="radius-chip"
-            :class="{ active: radius === r }"
-            @click="radius = r"
+            type="button"
+            class="radius-dropdown-toggle"
+            @click="showRadiusMenu = !showRadiusMenu"
           >
-            {{ r < 1 ? `${r * 1000} m` : `${r} km` }}
+            {{ radius < 1 ? `${radius * 1000} m` : `${radius} km` }}
+            <i class="material-icons">{{
+              showRadiusMenu ? 'expand_less' : 'expand_more'
+            }}</i>
           </button>
+          <div
+            v-if="showRadiusMenu"
+            class="radius-dropdown-backdrop"
+            @click="showRadiusMenu = false"
+          ></div>
+          <div v-if="showRadiusMenu" class="radius-dropdown-menu">
+            <button
+              v-for="r in [0.5, 1, 2, 5, 10, 50]"
+              :key="r"
+              type="button"
+              class="radius-dropdown-option"
+              :class="{ active: radius === r }"
+              @click="selectRadius(r)"
+            >
+              {{ r < 1 ? `${r * 1000} m` : `${r} km` }}
+              <i
+                v-if="r > 1 && !subscriptionStore.effectiveIsPro"
+                class="material-icons radius-lock"
+                >lock</i
+              >
+            </button>
+          </div>
         </div>
         <button class="retry-btn" @click="search" :disabled="loading">
           <i class="material-icons" :class="{ spinning: loading }">refresh</i>
@@ -379,12 +429,18 @@ export default {
         </button>
       </div>
       <div v-if="totalPages > 1" class="toolbar-pagination">
-        <button class="page-btn" :disabled="page === 1" @click="page--">
+        <button
+          class="page-btn"
+          :class="{ 'page-btn-hidden': page === 1 }"
+          :disabled="page === 1"
+          @click="page--"
+        >
           <i class="material-icons">chevron_left</i>
         </button>
         <span class="page-info">{{ page }} / {{ totalPages }}</span>
         <button
           class="page-btn"
+          :class="{ 'page-btn-hidden': page === totalPages }"
           :disabled="page === totalPages"
           @click="page++"
         >
@@ -416,7 +472,7 @@ export default {
       <div
         ref="resultsContainer"
         :style="
-          resultsHeight
+          resultsHeight && viewMode === 'list'
             ? { height: resultsHeight + 'px', overflow: 'hidden' }
             : {}
         "
@@ -459,15 +515,7 @@ export default {
                     ? 'Already saved'
                     : 'Save place'
                 "
-                @click.stop="
-                  !cartStore.isPlaceSaved(place.lat, place.lon) &&
-                  cartStore.savePlace({
-                    ...place,
-                    icon: selectedItem ? selectedItem.icon : 'place',
-                    subcategory: selectedItem ? selectedItem.label : '',
-                    category: selectedCategory ? selectedCategory.label : '',
-                  })
-                "
+                @click.stop="saveNearbyPlace(place)"
                 >bookmark_add</i
               >
               <i class="material-icons place-open-icon">near_me</i>
@@ -501,15 +549,7 @@ export default {
             <button
               class="place-card-save"
               :class="{ saved: cartStore.isPlaceSaved(place.lat, place.lon) }"
-              @click.stop="
-                !cartStore.isPlaceSaved(place.lat, place.lon) &&
-                cartStore.savePlace({
-                  ...place,
-                  icon: selectedItem ? selectedItem.icon : 'place',
-                  subcategory: selectedItem ? selectedItem.label : '',
-                  category: selectedCategory ? selectedCategory.label : '',
-                })
-              "
+              @click.stop="saveNearbyPlace(place)"
               :title="
                 cartStore.isPlaceSaved(place.lat, place.lon)
                   ? 'Already saved'
@@ -579,6 +619,7 @@ export default {
 .places-view {
   position: relative;
   min-height: 100%;
+  padding: spacing.$spacing-xxs 0;
 
   @include breakpoint.media-breakpoint-up(sm) {
     padding: spacing.$spacing-xs 0 calc(spacing.$spacing-xl * 3);
@@ -590,7 +631,6 @@ export default {
   top: 0;
   z-index: 6;
   background: color.$light-bg-soft;
-  padding-bottom: spacing.$spacing-xxs;
   border-bottom: size.$sp01 solid color.$border-light;
 }
 
@@ -598,7 +638,7 @@ export default {
   display: flex;
   align-items: center;
   gap: spacing.$spacing-xxs;
-  margin-bottom: spacing.$spacing-base;
+  padding: spacing.$spacing-xs spacing.$spacing-base;
   h2 {
     @include typography.headline-180;
     color: color.$dark-medium;
@@ -608,7 +648,7 @@ export default {
     margin: 0;
     flex: 1;
     .material-icons {
-      @include typography.headline-200;
+      @include typography.headline-240;
       color: color.$blue-violet;
     }
   }
@@ -623,11 +663,12 @@ export default {
   padding: spacing.$spacing-base;
   border-radius: size.$sp08;
   transition: background 0.15s;
+  
   &:hover {
     background: rgba(color.$blue-violet, 0.08);
   }
   .material-icons {
-    @include typography.headline-200;
+    @include typography.headline-280;
   }
 }
 
@@ -657,40 +698,95 @@ export default {
 .radius-row {
   display: flex;
   align-items: center;
-  gap: spacing.$spacing-xxs;
+  gap: spacing.$spacing-s;
   flex-wrap: wrap;
-  padding-top: spacing.$spacing-xxs;
+  padding: spacing.$spacing-xxs;
 
   label {
-    @include typography.headline-120-medium;
+    @include typography.headline-160-medium;
     color: color.$muted;
     flex-shrink: 0;
   }
 }
 
-.radius-chips {
-  display: flex;
-  gap: size.$sp10;
-  flex-wrap: wrap;
+.radius-dropdown {
+  position: relative;
   flex: 1;
 }
 
-.radius-chip {
+.radius-dropdown-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: spacing.$spacing-xxs;
   background: color.$light-bg;
-  border: none;
+  border: size.$sp02 solid color.$border-dark;
   border-radius: size.$sp10;
-  padding: spacing.$spacing-xxs;
+  padding: spacing.$spacing-xxs spacing.$spacing-base;
   cursor: pointer;
-  @include typography.headline-120-medium;
+  @include typography.headline-160-medium;
   color: color.$dark;
-  transition: 0.15s;
-  &.active {
-    background: color.$gold;
-    color: color.$white;
+
+  .material-icons {
+    @include typography.headline-200;
+    color: color.$muted;
   }
-  &:hover:not(.active) {
+
+  &:hover {
     background: color.$light-hover;
   }
+}
+
+.radius-dropdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+
+.radius-dropdown-menu {
+  position: absolute;
+  top: calc(100% + #{spacing.$spacing-xxs});
+  left: 0;
+  right: 0;
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: spacing.$spacing-xxs;
+  background: color.$white;
+  border-radius: size.$sp10;
+  box-shadow: size.$sp02 size.$sp04 size.$sp24 color.$dark;
+  overflow: hidden;
+}
+
+.radius-dropdown-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: spacing.$spacing-xxs;
+  border: none;
+  border-radius: size.$sp08;
+  background: none;
+  padding: spacing.$spacing-base spacing.$spacing-base;
+  cursor: pointer;
+  @include typography.headline-160-medium;
+  color: color.$dark;
+  text-align: left;
+
+  &:hover {
+    background: color.$light-hover;
+  }
+
+  &.active {
+    background: color.$blue-violet;
+    color: color.$white;
+  }
+}
+
+.radius-lock {
+  @include typography.headline-160;
+  color: color.$muted;
 }
 
 .retry-btn {
@@ -727,7 +823,7 @@ export default {
   align-items: center;
   gap: spacing.$spacing-xxs;
   padding: spacing.$spacing-s spacing.$spacing-xxs;
-  background: color.$light-bg;
+  background: color.$light50;
   border: none;
   border-radius: size.$sp12;
   cursor: pointer;
@@ -753,9 +849,8 @@ export default {
   flex-wrap: wrap;
   justify-content: center;
   gap: size.$sp08;
-  padding: spacing.$spacing-xxs 0 spacing.$spacing-s;
+  padding: spacing.$spacing-s spacing.$spacing-base;
   &.subcategory-chips--compact {
-    padding-bottom: spacing.$spacing-xxs;
     border-bottom: size.$sp01 solid color.$border-light;
   }
 }
@@ -776,9 +871,8 @@ export default {
     @include typography.headline-160;
   }
   &.active {
-    border-color: color.$dark;
-    color: color.$dark;
-    background-color: color.$gold;
+    color: color.$white;
+    background-color: color.$blue-violet;
   }
   &:hover:not(.active) {
     background: color.$light-hover;
@@ -891,7 +985,7 @@ export default {
 }
 .place-open-icon {
   @include typography.headline-240;
-  color: color.$gold;
+  color: color.$blue-violet;
 
   &:hover {
     color: color.$muted-lighter;
@@ -905,13 +999,14 @@ export default {
 .place-save-icon {
   @include typography.headline-240;
   cursor: pointer;
-  color: color.$blue-violet;
+  color: color.$muted-lighter;
   transition: color 0.15s;
   &:hover {
-    color: color.$muted-lighter;
+      color: color.$blue-violet;
+
   }
   &.saved {
-    color: color.$muted-lighter;
+      color: color.$blue-violet;
     cursor: default;
   }
 }
@@ -927,11 +1022,13 @@ export default {
   padding: size.$sp04 spacing.$spacing-base;
   cursor: pointer;
   width: 100%;
-  @include typography.headline-120-medium;
+  @include typography.headline-160-medium;
   color: color.$blue-violet;
   transition: 0.15s;
+
   .material-icons {
-    font-size: 14px;
+      @include typography.headline-160-medium;
+      padding: spacing.$spacing-base;
   }
   &:hover {
     background: rgba(color.$muted, 0.15);
@@ -968,7 +1065,7 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: size.$sp04;
+  gap: spacing.$spacing-xs;
   text-align: center;
   &:hover {
     box-shadow: 0 size.$sp04 size.$sp16 rgba(color.$blue-violet, 0.12);
@@ -986,13 +1083,13 @@ export default {
   justify-content: center;
 
   .material-icons {
-    @include typography.headline-200;
+    @include typography.headline-240;
     color: color.$blue-violet;
   }
 }
 
 .place-card-name {
-  @include typography.headline-120-medium;
+  @include typography.headline-160-medium;
   color: color.$dark;
   overflow: hidden;
   display: -webkit-box;
@@ -1001,6 +1098,7 @@ export default {
   -webkit-box-orient: vertical;
   width: 100%;
 }
+
 .place-card-address {
   @include typography.headline-100;
   color: color.$muted;
@@ -1011,15 +1109,17 @@ export default {
   -webkit-box-orient: vertical;
   width: 100%;
 }
+
 .place-card-dist {
-  @include typography.headline-120-medium;
+  @include typography.headline-160-medium;
   color: color.$blue-violet;
   display: flex;
   align-items: center;
   gap: size.$sp02;
   margin-top: auto;
+
   .material-icons {
-    font-size: 12px;
+      @include typography.headline-160-medium;
   }
 }
 
@@ -1086,7 +1186,7 @@ export default {
     color: color.$white;
   }
   &.apple-btn {
-    background: color.$dark;
+    background: color.$gold;
     color: color.$white;
   }
 }
@@ -1107,7 +1207,7 @@ export default {
   display: flex;
   align-items: center;
   gap: spacing.$spacing-xs;
-  padding: size.$sp06 0 size.$sp04;
+  padding: spacing.$spacing-xxs spacing.$spacing-s;
   justify-self: flex-end;
 }
 
@@ -1118,9 +1218,9 @@ export default {
   padding: size.$sp04;
   cursor: pointer;
   display: flex;
-  color: color.$blue-violet;
+  color: color.$dark;
   transition: background 0.15s;
-  @include typography.headline-160;
+  @include typography.headline-200;
 
   &:hover:not(:disabled) {
     background: rgba(color.$blue-violet, 0.1);
@@ -1130,14 +1230,18 @@ export default {
     cursor: default;
   }
   .material-icons {
-    @include typography.headline-160;
+    @include typography.headline-280;
   }
+}
+
+.page-btn-hidden {
+  visibility: hidden;
 }
 
 .page-info {
   @include typography.headline-160-medium;
-  color: color.$muted;
-  min-width: 40px;
+  color: color.$dark;
+  min-width: size.$sp40;
   text-align: center;
 }
 
@@ -1155,10 +1259,6 @@ export default {
     }
   }
 }
-</style>
-
-<style lang="scss">
-@use '@/styles/abstracts/color';
 
 html.dark .places-toolbar {
   background: color.$dark;
@@ -1166,12 +1266,16 @@ html.dark .places-toolbar {
 }
 html.dark .toolbar-row h2 {
   color: color.$light;
+
+  .material-icons {
+    color: color.$gold;
+  }
 }
 html.dark .category-card {
   background: color.$dark-soft;
 
   .material-icons {
-    color: color.$white;
+    color: color.$gold;
   }
   span {
     color: color.$light;
@@ -1187,22 +1291,40 @@ html.dark .sub-chip {
     background: color.$dark-medium;
   }
   &.active {
-    color: color.$dark50;
+    color: color.$white;
     background: color.$gold;
   }
 }
-html.dark .radius-chip {
+html.dark .radius-dropdown-toggle {
   background: color.$dark-soft;
+  border-color: rgba(color.$light, 0.3);
   color: color.$light;
+
+  .material-icons {
+    color: color.$light50;
+  }
+}
+html.dark .radius-dropdown-menu {
+  background: color.$dark-soft;
+  box-shadow: size.$sp02 size.$sp04 size.$sp24 rgba(color.$white, 0.15);
+}
+html.dark .radius-dropdown-option {
+  color: color.$light;
+
+  &:hover {
+    background: rgba(color.$light, 0.1);
+  }
+
   &.active {
     background: color.$gold;
+    color: color.$white;
   }
 }
 html.dark .view-toggle button {
   background: color.$dark-soft;
   color: color.$light50;
   &.active {
-    background: color.$blue-violet;
+    background: color.$gold;
     color: color.$white;
   }
 }
@@ -1233,5 +1355,77 @@ html.dark .map-picker-cancel {
 }
 html.dark .toolbar-pagination {
   border-top-color: color.$dark-soft;
+}
+
+html.dark .back-btn {
+  .material-icons {
+    color: color.$gold;
+  }
+}
+
+html.dark .place-type-icon {
+  color: color.$gold;
+}
+
+html.dark .place-dist {
+  color: color.$gold;
+}
+
+html.dark  .place-save-icon {
+  color: color.$muted-lighter;
+  transition: color 0.15s;
+  &:hover {
+      color: color.$gold;
+
+  }
+  &.saved {
+      color: color.$gold;
+    cursor: default;
+  }
+}
+
+
+html.dark .page-btn {
+
+  &:hover:not(:disabled) {
+    background: rgba(color.$white, 0.1);
+  }
+  &:disabled {
+    color: color.$muted-lighter;
+    cursor: default;
+  }
+  .material-icons {
+    color: color.$white;
+  }
+}
+
+html.dark .place-open-icon {
+  color: color.$gold;
+}
+
+html.dark .page-info {
+  color: color.$white;
+}
+
+html.dark .place-card-icon {
+  background: rgba(color.$gold, 0.1);
+
+  .material-icons {
+    @include typography.headline-200;
+    color: color.$gold;
+  }
+}
+
+html.dark .place-card-dist {
+  color: color.$gold;
+}
+
+html.dark .place-card-save {
+  background: rgba(color.$light, 0.1);
+
+  .material-icons {
+    color: color.$gold;
+  }
+  
 }
 </style>

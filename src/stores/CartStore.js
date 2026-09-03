@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useSubscriptionStore, FREE_LIMITS } from './SubscriptionStore'
 
 const STORAGE_KEY = 'pinit_cart_items'
 const TOAST_TIMEOUT_MS = 2600
@@ -115,19 +116,11 @@ export const useCartStore = defineStore('cartStore', {
     groups() {
       const fromItems = (this.cartItems || []).filter(i => !i.isSaved).map(item => item.group || 'General')
       const all = [...new Set([...this.customGroups, ...fromItems])]
-      const order = this.groupOrder
-      return all.sort((a, b) => {
-        const ia = order.indexOf(a)
-        const ib = order.indexOf(b)
-        if (ia === -1 && ib === -1) return a.localeCompare(b)
-        if (ia === -1) return 1
-        if (ib === -1) return -1
-        return ia - ib
-      })
+      return all.sort((a, b) => a.localeCompare(b))
     },
     itemsByGroup() {
       const grouped = {}
-      const sorted = [...(this.cartItems || [])].filter(i => !i.isSaved).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      const sorted = [...(this.cartItems || [])].filter(i => !i.isSaved).sort((a, b) => a.title.localeCompare(b.title))
       for (const item of sorted) {
         const g = item.group || 'General'
         if (!grouped[g]) grouped[g] = []
@@ -137,7 +130,7 @@ export const useCartStore = defineStore('cartStore', {
     },
     savedByGroup() {
       const grouped = {}
-      const sorted = [...(this.cartItems || [])].filter(i => i.isSaved).sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      const sorted = [...(this.cartItems || [])].filter(i => i.isSaved).sort((a, b) => a.title.localeCompare(b.title))
       for (const item of sorted) {
         const g = item.group || 'General'
         if (!grouped[g]) grouped[g] = []
@@ -202,6 +195,12 @@ export const useCartStore = defineStore('cartStore', {
     },
 
     addCartItem(cartItem) {
+      const subscriptionStore = useSubscriptionStore()
+      if (!subscriptionStore.effectiveIsPro && this.totalCount >= FREE_LIMITS.items) {
+        subscriptionStore.openPaywall('cart-item-limit')
+        return
+      }
+
       const resolvedGroup = resolveGroupName(
         this.cartItems,
         this.customGroups,
@@ -235,6 +234,12 @@ export const useCartStore = defineStore('cartStore', {
     },
 
     saveItem(id) {
+      const subscriptionStore = useSubscriptionStore()
+      if (!subscriptionStore.effectiveIsPro) {
+        subscriptionStore.openPaywall('saved-templates')
+        return
+      }
+
       const cartItem = this.cartItems.find(t => t._id === id)
       if (!cartItem) return
 
@@ -274,10 +279,16 @@ export const useCartStore = defineStore('cartStore', {
       }
       this.cartItems.push(newItem)
       saveItems(this.cartItems)
-      this.showToast('Item saved.', 'success')
+      this.showToast(`"${cartItem.title}" added to favorites.`, 'success')
     },
 
     saveGroupAsFavorites(groupName) {
+      const subscriptionStore = useSubscriptionStore()
+      if (!subscriptionStore.effectiveIsPro) {
+        subscriptionStore.openPaywall('saved-templates')
+        return
+      }
+
       const groupItems = this.cartItems.filter(
         item => !item.isSaved && (item.group || 'General') === groupName,
       )
@@ -345,6 +356,12 @@ export const useCartStore = defineStore('cartStore', {
     },
 
     addItemsToFavorites(items, groupName = 'Recipes', options = {}) {
+      const subscriptionStore = useSubscriptionStore()
+      if (!subscriptionStore.effectiveIsPro) {
+        subscriptionStore.openPaywall('saved-templates')
+        return
+      }
+
       if (!Array.isArray(items) || items.length === 0) {
         this.showToast('No items available to save.', 'warning')
         return
@@ -443,12 +460,17 @@ export const useCartStore = defineStore('cartStore', {
 
       const messages = []
       if (favoritesToAdd.length > 0) {
-        messages.push(`saved ${favoritesToAdd.length}`)
+        const addedNames = favoritesToAdd.map(item => item.title)
+        messages.push(
+          addedNames.length <= 3
+            ? `"${addedNames.join('", "')}" added`
+            : `${addedNames.length} items added`,
+        )
       }
       if (updatedCount > 0) {
-        messages.push(`updated ${updatedCount}`)
+        messages.push(`${updatedCount} updated`)
       }
-      this.showToast(`Favorites templates: ${messages.join(', ')}.`, 'success')
+      this.showToast(`${messages.join(', ')} to favorites.`, 'success')
     },
 
     hasMatchingFavoriteForCartItem(cartItem) {
@@ -510,6 +532,12 @@ export const useCartStore = defineStore('cartStore', {
     },
 
     addCustomGroup(name) {
+      const subscriptionStore = useSubscriptionStore()
+      if (!subscriptionStore.effectiveIsPro && this.groups.length >= FREE_LIMITS.groups) {
+        subscriptionStore.openPaywall('cart-group-limit')
+        return null
+      }
+
       const resolved = resolveGroupName(this.cartItems, this.customGroups, name, false)
       const key = getGroupKey(resolved)
       const exists = this.customGroups.some(group => getGroupKey(group) === key)
@@ -640,11 +668,6 @@ export const useCartStore = defineStore('cartStore', {
       saveItems(this.cartItems)
     },
 
-    reorderGroups(orderedGroups) {
-      this.groupOrder = orderedGroups
-      localStorage.setItem('pinit_group_order', JSON.stringify(orderedGroups))
-    },
-
     clearCart() {
       this.cartItems = []
       this.customGroups = []
@@ -655,6 +678,12 @@ export const useCartStore = defineStore('cartStore', {
     },
 
     savePlace(place) {
+      const subscriptionStore = useSubscriptionStore()
+      if (!subscriptionStore.effectiveIsPro) {
+        subscriptionStore.openPaywall('saved-places')
+        return
+      }
+
       const already = this.savedPlaces.some(p => Math.abs(p.lat - place.lat) < 0.0001 && Math.abs(p.lon - place.lon) < 0.0001)
       if (already) { this.showToast('Place already saved.', 'info'); return }
       this.savedPlaces.push({ id: generateId(), ...place, savedAt: Date.now() })
